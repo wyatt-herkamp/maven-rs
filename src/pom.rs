@@ -2,7 +2,6 @@ use std::iter::Map;
 use serde::{Deserialize, Serialize};
 
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Developers {
     pub developer: Vec<Developer>,
@@ -36,4 +35,6 @@ pub struct Pom {
     pub url: Option<String>,
     pub scm: Option<Scm>,
 }
+
+
 

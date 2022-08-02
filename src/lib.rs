@@ -7,6 +7,7 @@ pub mod snapshot_metadata;
 mod local_config;
 
 use thiserror::Error;
+pub use serde_xml_rs;
 
 #[derive(Error, Debug)]
 pub enum Error {
