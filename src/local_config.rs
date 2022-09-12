@@ -2,21 +2,32 @@ use crate::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Settings {
-    #[serde(rename = "localRepository")]
+    #[serde(rename = "$unflatten=localRepository")]
     pub local_repository: Option<String>,
     #[serde(default)]
-    pub servers: Vec<Server>,
+    pub servers: Servers,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Servers {
+    #[serde(default, rename = "server")]
+    pub servers: Vec<Server>,
+
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Server {
+    #[serde(rename = "$unflatten=id")]
     pub id: String,
+    #[serde(rename = "$unflatten=username")]
     pub username: Option<String>,
+    #[serde(rename = "$unflatten=password")]
     pub password: Option<String>,
 }
 
 #[cfg(feature = "directories")]
 pub mod directories {
+    use std::io::BufReader;
     use std::path::PathBuf;
     use crate::Error;
     use super::Settings;
@@ -39,7 +50,8 @@ pub mod directories {
                 return Ok(Settings::default());
             }
             let file = std::fs::File::open(result)?;
-            serde_xml_rs::from_reader(&file).map_err(|e| Error::XMLParser(e))
+
+            quick_xml::de::from_reader(BufReader::new(file)).map_err(Error::from)
         }
         pub fn get_local_repository(&self) -> Option<PathBuf> {
             if let Some(ref local_repository) = self.local_repository {
@@ -48,5 +60,33 @@ pub mod directories {
                 get_settings_directory().and_then(|dir| Some(dir.join("repository")))
             }
         }
+    }
+}
+
+#[cfg(all(test, feature = "directories"))]
+pub mod tests {
+    use crate::local_config::{Server, Servers, Settings};
+
+    #[test]
+    pub fn test_to_string() {
+        let settings = Settings {
+            local_repository: Some("test".to_string()),
+            servers: Servers {
+                servers: vec
+                ![Server {
+                    id: "test".to_string(),
+                    username: Some("test".to_string()),
+                    password: Some("test".to_string()),
+                }],
+            },
+        };
+
+        println!("{}", quick_xml::se::to_string(&settings).unwrap());
+    }
+
+    #[test]
+    pub fn test_read_local_config() {
+        let settings = Settings::read_local_config().unwrap();
+        println!("{:?}", settings);
     }
 }

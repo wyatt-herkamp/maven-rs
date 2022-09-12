@@ -1,5 +1,5 @@
 pub mod standard_time {
-    use chrono::{DateTime, NaiveDateTime, ParseError, TimeZone, Utc};
+    use chrono::{DateTime, TimeZone, Utc};
     use serde::{Deserialize, Deserializer, Serializer};
 
     const FORMAT: &str = "%Y%m%d%H%M%S";
@@ -28,7 +28,7 @@ pub mod standard_time {
 }
 
 pub mod snapshot_time {
-    use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+    use chrono::{DateTime, TimeZone, Utc};
     use serde::{Deserialize, Deserializer, Serializer};
 
     const FORMAT: &str = "%Y%m%d.%H%M%S";

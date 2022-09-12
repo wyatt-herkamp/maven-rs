@@ -1,4 +1,3 @@
-use std::iter::Map;
 use serde::{Deserialize, Serialize};
 
 
@@ -36,5 +35,22 @@ pub struct Pom {
     pub scm: Option<Scm>,
 }
 
+#[cfg(all(test))]
+pub mod tests {
+    use std::io::BufReader;
+    use std::path::PathBuf;
+    use crate::pom::Pom;
 
+    const MANIFEST: &str = env!("CARGO_MANIFEST_DIR");
+    #[test]
+    pub fn test_read_local_config() {
+        let buf = PathBuf::from(MANIFEST).join("tests").join("data").join("test-pom.xml");
+        if !buf.exists(){
+            panic!("Test file not found");
+        }
+        let file = std::fs::File::open(buf).unwrap();
+        let x: Pom = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
+        println!("{:#?}", x);
+    }
+}
 

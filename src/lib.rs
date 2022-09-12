@@ -4,15 +4,17 @@ pub mod pom;
 pub mod maven_metadata;
 pub mod time;
 pub mod snapshot_metadata;
-mod local_config;
+pub mod local_config;
 
 use thiserror::Error;
-pub use serde_xml_rs;
 
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Failed to read {0}")]
     Io(#[from]std::io::Error),
     #[error("Failed to parse {0}")]
-    XMLParser(#[from]serde_xml_rs::Error),
+    XMLParser(#[from]quick_xml::Error),
+    #[error("Failed to deserialize {0}")]
+    XMLDeserialize(#[from]quick_xml::de::DeError),
+
 }
