@@ -6,6 +6,7 @@ pub mod time;
 pub mod snapshot_metadata;
 pub mod local_config;
 
+pub use quick_xml;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
