@@ -20,7 +20,7 @@ impl DeployMetadata {
         self.versioning
             .latest
             .as_ref()
-            .or_else(|| self.versioning.release.as_ref())
+            .or(self.versioning.release.as_ref())
             .or_else(|| self.versioning.versions.version.first())
     }
     /// Returns a tuple of the latest version and the artifact name.
