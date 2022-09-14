@@ -8,7 +8,6 @@ pub struct MavenFileExtension {
     pub classifier: Option<String>,
 }
 
-
 impl From<&str> for MavenFileExtension {
     fn from(value: &str) -> Self {
         MavenFileExtension {
@@ -62,9 +61,9 @@ impl From<(Option<String>, String, Option<String>)> for MavenFileExtension {
 impl From<(Option<&str>, &str, Option<&str>)> for MavenFileExtension {
     fn from((classifier, file, hash): (Option<&str>, &str, Option<&str>)) -> Self {
         MavenFileExtension {
-            hash: hash.and_then(|x| Some(x.to_owned())),
+            hash: hash.map(|x| x.to_owned()),
             file_extension: file.to_string(),
-            classifier: classifier.and_then(|x| Some(x.to_owned())),
+            classifier: classifier.map(|x| x.to_owned()),
         }
     }
 }

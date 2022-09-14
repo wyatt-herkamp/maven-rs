@@ -1,6 +1,6 @@
+use crate::MavenFileExtension;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use crate::MavenFileExtension;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SnapshotMetadata {
@@ -14,12 +14,13 @@ pub struct SnapshotMetadata {
 
 impl SnapshotMetadata {
     /// Returns None if the version is not found in the metadata.
-    pub fn get_latest_artifact_name(&self, extension: impl Into<MavenFileExtension>) -> Option<String> {
+    pub fn get_latest_artifact_name(
+        &self,
+        extension: impl Into<MavenFileExtension>,
+    ) -> Option<String> {
         let extension = extension.into();
         if let Some(ref value) = self.versioning.snapshot_versions {
-            let filter = value.snapshot_version.iter().find(|x| {
-                (*x).eq(&extension)
-            });
+            let filter = value.snapshot_version.iter().find(|x| (*x).eq(&extension));
             return if let Some(value) = filter {
                 let name = format!("{}-{}{}", self.artifact_id, value.value, extension);
                 Some(name)
@@ -72,14 +73,18 @@ impl PartialEq<MavenFileExtension> for SnapshotVersion {
 
 #[cfg(test)]
 pub mod test {
+    use crate::snapshot_metadata::SnapshotMetadata;
+    use crate::MANIFEST;
     use std::io::BufReader;
     use std::path::{Path, PathBuf};
-    use crate::MANIFEST;
-    use crate::snapshot_metadata::SnapshotMetadata;
 
     #[test]
     pub fn load_kakara_engine_metadata() {
-        let buf = PathBuf::from(MANIFEST).join("tests").join("data").join("kakara-engine").join("snapshot.xml");
+        let buf = PathBuf::from(MANIFEST)
+            .join("tests")
+            .join("data")
+            .join("kakara-engine")
+            .join("snapshot.xml");
         if !buf.exists() {
             panic!("Test file not found");
         }

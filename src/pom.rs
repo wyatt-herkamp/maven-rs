@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Developers {
     pub developer: Vec<Developer>,
@@ -37,15 +36,18 @@ pub struct Pom {
 
 #[cfg(all(test))]
 pub mod tests {
+    use crate::pom::Pom;
+    use crate::MANIFEST;
     use std::io::BufReader;
     use std::path::PathBuf;
-    use crate::MANIFEST;
-    use crate::pom::Pom;
 
     #[test]
     pub fn test_read_local_config() {
-        let buf = PathBuf::from(MANIFEST).join("tests").join("data").join("test-pom.xml");
-        if !buf.exists(){
+        let buf = PathBuf::from(MANIFEST)
+            .join("tests")
+            .join("data")
+            .join("test-pom.xml");
+        if !buf.exists() {
             panic!("Test file not found");
         }
         let file = std::fs::File::open(buf).unwrap();
@@ -53,4 +55,3 @@ pub mod tests {
         println!("{:#?}", x);
     }
 }
-

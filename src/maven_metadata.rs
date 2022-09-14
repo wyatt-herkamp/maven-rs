@@ -24,21 +24,24 @@ pub struct Versions {
     pub version: Vec<String>,
 }
 #[cfg(test)]
-pub mod test{
+pub mod test {
+    use crate::maven_metadata::DeployMetadata;
+    use crate::MANIFEST;
     use std::io::BufReader;
     use std::path::{Path, PathBuf};
-    use crate::MANIFEST;
-    use crate::maven_metadata::DeployMetadata;
 
     #[test]
     pub fn load_kakara_engine_metadata() {
-        let buf = PathBuf::from(MANIFEST).join("tests").join("data").join("kakara-engine").join("maven-metadata.xml");
-        if !buf.exists(){
+        let buf = PathBuf::from(MANIFEST)
+            .join("tests")
+            .join("data")
+            .join("kakara-engine")
+            .join("maven-metadata.xml");
+        if !buf.exists() {
             panic!("Test file not found");
         }
         let file = std::fs::File::open(buf).unwrap();
         let x: DeployMetadata = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
         println!("{:#?}", x);
     }
-
 }

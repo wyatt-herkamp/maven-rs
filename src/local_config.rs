@@ -1,4 +1,4 @@
-use crate::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Settings {
@@ -12,7 +12,6 @@ pub struct Settings {
 pub struct Servers {
     #[serde(default, rename = "server")]
     pub servers: Vec<Server>,
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -27,10 +26,10 @@ pub struct Server {
 
 #[cfg(feature = "directories")]
 pub mod directories {
+    use super::Settings;
+    use crate::Error;
     use std::io::BufReader;
     use std::path::PathBuf;
-    use crate::Error;
-    use super::Settings;
 
     /// Returns the path to the .m2 folder
     pub fn get_settings_directory() -> Option<PathBuf> {
@@ -45,7 +44,10 @@ pub mod directories {
     impl Settings {
         /// Attempts to read the local configuration file.
         pub fn read_local_config() -> Result<Settings, Error> {
-            let result = get_settings_path().ok_or(Error::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "System User Path Not Found")))?;
+            let result = get_settings_path().ok_or(Error::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "System User Path Not Found",
+            )))?;
             if !result.exists() {
                 return Ok(Settings::default());
             }
@@ -72,8 +74,7 @@ pub mod tests {
         let settings = Settings {
             local_repository: Some("test".to_string()),
             servers: Servers {
-                servers: vec
-                ![Server {
+                servers: vec![Server {
                     id: "test".to_string(),
                     username: Some("test".to_string()),
                     password: Some("test".to_string()),
