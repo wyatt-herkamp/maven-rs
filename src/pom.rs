@@ -39,9 +39,9 @@ pub struct Pom {
 pub mod tests {
     use std::io::BufReader;
     use std::path::PathBuf;
+    use crate::MANIFEST;
     use crate::pom::Pom;
 
-    const MANIFEST: &str = env!("CARGO_MANIFEST_DIR");
     #[test]
     pub fn test_read_local_config() {
         let buf = PathBuf::from(MANIFEST).join("tests").join("data").join("test-pom.xml");
