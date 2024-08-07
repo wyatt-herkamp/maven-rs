@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Settings {
-    #[serde(rename = "$unflatten=localRepository")]
+    #[serde(rename = "localRepository")]
     pub local_repository: Option<String>,
     #[serde(default)]
     pub servers: Servers,
@@ -16,15 +16,12 @@ pub struct Servers {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Server {
-    #[serde(rename = "$unflatten=id")]
     pub id: String,
-    #[serde(rename = "$unflatten=username")]
     pub username: Option<String>,
-    #[serde(rename = "$unflatten=password")]
     pub password: Option<String>,
 }
 
-#[cfg(feature = "directories")]
+#[cfg(feature = "local")]
 pub mod directories {
     use super::Settings;
     use crate::Error;
@@ -65,7 +62,7 @@ pub mod directories {
     }
 }
 
-#[cfg(all(test, feature = "directories"))]
+#[cfg(all(test, feature = "local"))]
 pub mod tests {
     use crate::local_config::{Server, Servers, Settings};
 

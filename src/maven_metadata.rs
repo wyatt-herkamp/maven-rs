@@ -1,5 +1,5 @@
 use crate::MavenFileExtension;
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -52,7 +52,7 @@ pub struct Versioning {
     pub latest: Option<String>,
     pub versions: Versions,
     #[serde(rename = "lastUpdated", with = "crate::time::standard_time")]
-    pub last_updated: Option<DateTime<Utc>>,
+    pub last_updated: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

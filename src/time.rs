@@ -1,13 +1,13 @@
 macro_rules! define_time_format {
     ($time:ident,$format:literal) => {
         pub mod $time {
-            use chrono::{DateTime, TimeZone, Utc};
+            use chrono::{DateTime, NaiveDateTime, Utc};
             use serde::{Deserialize, Deserializer, Serializer};
 
-            const FORMAT: &str = $format;
+            static FORMAT: &str = $format;
 
             pub fn serialize<S>(
-                date: &Option<DateTime<Utc>>,
+                date: &Option<NaiveDateTime>,
                 serializer: S,
             ) -> Result<S::Ok, S::Error>
             where
@@ -21,13 +21,15 @@ macro_rules! define_time_format {
                 }
             }
 
-            pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+            pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<NaiveDateTime>, D::Error>
             where
                 D: Deserializer<'de>,
             {
                 let s = String::deserialize(deserializer)?;
-                Utc.datetime_from_str(&s, FORMAT)
-                    .map_err(serde::de::Error::custom)
+                NaiveDateTime::parse_from_str(&s, FORMAT)
+                    .map_err(|err| {
+                        serde::de::Error::custom(format!("Failed to parse date: {} {} ", s, err))
+                    })
                     .map(Some)
             }
         }

@@ -1,5 +1,5 @@
 use crate::MavenFileExtension;
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -33,12 +33,12 @@ impl SnapshotMetadata {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Versioning {
     pub snapshot: Option<Snapshot>,
-    #[serde(rename = "snapshotVersions")]
     pub snapshot_versions: Option<SnapshotVersions>,
-    #[serde(rename = "lastUpdated", with = "crate::time::standard_time")]
-    pub last_updated: Option<DateTime<Utc>>,
+    #[serde(with = "crate::time::standard_time")]
+    pub last_updated: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -48,10 +48,10 @@ pub struct SnapshotVersions {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Snapshot {
     #[serde(with = "crate::time::snapshot_time")]
-    pub timestamp: Option<DateTime<Utc>>,
-    #[serde(rename = "buildNumber")]
+    pub timestamp: Option<NaiveDateTime>,
     pub build_number: String,
 }
 
@@ -61,8 +61,8 @@ pub struct SnapshotVersion {
     #[serde(default)]
     pub extension: String,
     pub value: String,
-    #[serde(rename = "updated", with = "crate::time::standard_time")]
-    pub updated: Option<DateTime<Utc>>,
+    #[serde(with = "crate::time::standard_time")]
+    pub updated: Option<NaiveDateTime>,
 }
 
 impl PartialEq<MavenFileExtension> for SnapshotVersion {
@@ -74,9 +74,9 @@ impl PartialEq<MavenFileExtension> for SnapshotVersion {
 #[cfg(test)]
 pub mod test {
     use crate::snapshot_metadata::SnapshotMetadata;
-    use crate::MANIFEST;
+    use crate::{MavenFileExtension, MANIFEST};
     use std::io::BufReader;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     #[test]
     pub fn load_kakara_engine_metadata() {
@@ -89,17 +89,25 @@ pub mod test {
             panic!("Test file not found");
         }
         let file = std::fs::File::open(buf).unwrap();
-        let x: SnapshotMetadata = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
-        if let Some(value) = x.get_latest_artifact_name("jar") {
+        let snapshot_meta: SnapshotMetadata =
+            quick_xml::de::from_reader(BufReader::new(file)).unwrap();
+        if let Some(value) = snapshot_meta.get_latest_artifact_name("jar") {
             println!("{}", value);
         }
-        if let Some(value) = x.get_latest_artifact_name((Some("sources"), "jar", Some("sha256"))) {
+        let extension = MavenFileExtension {
+            hash: Some("sha256".to_owned()),
+            file_extension: "jar".to_owned(),
+            classifier: Some("sources".to_owned()),
+        };
+        if let Some(value) = snapshot_meta.get_latest_artifact_name(extension) {
             println!("{}", value);
         }
-        if let Some(value) = x.get_latest_artifact_name((Some("javadoc"), "jar", None)) {
+        if let Some(value) = snapshot_meta
+            .get_latest_artifact_name(MavenFileExtension::from("jar").with_classifier("javadoc"))
+        {
             println!("{}", value);
         }
 
-        println!("{:#?}", x);
+        println!("{:#?}", snapshot_meta);
     }
 }
