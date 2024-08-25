@@ -1,7 +1,7 @@
 macro_rules! define_time_format {
     ($time:ident,$format:literal) => {
         pub mod $time {
-            use chrono::{DateTime, NaiveDateTime, Utc};
+            use chrono::NaiveDateTime;
             use serde::{Deserialize, Deserializer, Serializer};
 
             static FORMAT: &str = $format;

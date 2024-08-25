@@ -20,18 +20,41 @@ pub struct Scm {
     #[serde(rename = "developerConnection")]
     pub developer_connection: Option<String>,
 }
-
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Parent {
+    #[serde(rename = "groupId")]
+    pub group_id: Option<String>,
+    #[serde(rename = "artifactId")]
+    pub artifact_id: Option<String>,
+    pub version: Option<String>,
+}
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Pom {
     #[serde(rename = "groupId")]
-    pub group_id: String,
+    pub group_id: Option<String>,
     #[serde(rename = "artifactId")]
     pub artifact_id: String,
-    pub version: String,
+    pub parent: Option<Parent>,
+    pub version: Option<String>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub url: Option<String>,
     pub scm: Option<Scm>,
+}
+impl Pom {
+    /// Gets the group id of the pom.
+    /// If the group id is not present, it will attempt to get the group id from the parent.
+    /// If the parent does not have a group id, it will return None.
+    pub fn get_group_id(&self) -> Option<&str> {
+        self.group_id
+            .as_deref()
+            .or(self.parent.as_ref().and_then(|x| x.group_id.as_deref()))
+    }
+    pub fn get_version(&self) -> Option<&str> {
+        self.version
+            .as_deref()
+            .or(self.parent.as_ref().and_then(|x| x.version.as_deref()))
+    }
 }
 
 #[cfg(all(test))]
@@ -47,6 +70,19 @@ pub mod tests {
             .join("tests")
             .join("data")
             .join("test-pom.xml");
+        if !buf.exists() {
+            panic!("Test file not found");
+        }
+        let file = std::fs::File::open(buf).unwrap();
+        let x: Pom = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
+        println!("{:#?}", x);
+    }
+    #[test]
+    pub fn read_gson_pom() {
+        let buf = PathBuf::from(MANIFEST)
+            .join("tests")
+            .join("data")
+            .join("gson-2.11.0.pom");
         if !buf.exists() {
             panic!("Test file not found");
         }
