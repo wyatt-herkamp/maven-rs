@@ -175,22 +175,26 @@ impl PomEditor {
     pub(crate) fn root(&self) -> Element {
         self.document.root_element().unwrap()
     }
-    pub fn write_to_str(&self) -> Result<String, EditXMLError> {
-        self.document.write_str_with_opts(WriteOptions {
-            write_decl: true,
-            indent_size: self.ident_level,
-            ..Default::default()
-        })
-    }
-    pub fn write<W: Write>(&self, writer: &mut W) -> Result<(), EditXMLError> {
-        self.document.write_with_opts(
-            writer,
-            WriteOptions {
+    pub fn write_to_str(&self) -> Result<String, XMLEditorError> {
+        self.document
+            .write_str_with_opts(WriteOptions {
                 write_decl: true,
                 indent_size: self.ident_level,
                 ..Default::default()
-            },
-        )
+            })
+            .map_err(XMLEditorError::from)
+    }
+    pub fn write<W: Write>(&self, writer: &mut W) -> Result<(), XMLEditorError> {
+        self.document
+            .write_with_opts(
+                writer,
+                WriteOptions {
+                    write_decl: true,
+                    indent_size: self.ident_level,
+                    ..Default::default()
+                },
+            )
+            .map_err(XMLEditorError::from)
     }
 }
 
