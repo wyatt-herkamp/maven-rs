@@ -5,10 +5,11 @@ use crate::{
     editor::{
         utils::{
             add_if_present, create_basic_text_element, find_or_create_then_set_text_content,
-            from_element_using_builder,
+            from_element_using_builder, typed_from_element_using_builder,
         },
         ChildOfListElement, ElementConverter, HasElementName, UpdatableElement, XMLEditorError,
     },
+    types::StringOrVariable,
     utils::group_id_and_artifact_id_and_version_to_path,
 };
 use derive_builder::Builder;
@@ -42,7 +43,7 @@ pub struct Dependency {
     #[builder(setter(into))]
     pub artifact_id: String,
     #[builder(setter(into))]
-    pub version: String,
+    pub version: StringOrVariable,
     #[serde(rename = "type")]
     #[builder(default, setter(into, strip_option))]
     pub depend_type: Option<String>,
@@ -67,7 +68,7 @@ impl Dependency {
         let path = group_id_and_artifact_id_and_version_to_path(
             &self.group_id,
             &self.artifact_id,
-            &self.version,
+            &self.version.to_string(),
         );
         format!("{}/{}", path, self.pom_name())
     }
@@ -86,7 +87,12 @@ impl UpdatableElement for Dependency {
         element: Element,
         document: &mut Document,
     ) -> Result<(), XMLEditorError> {
-        find_or_create_then_set_text_content(document, element, "version", &self.version);
+        find_or_create_then_set_text_content(
+            document,
+            element,
+            "version",
+            &self.version.to_string(),
+        );
         if let Some(depend_type) = &self.depend_type {
             find_or_create_then_set_text_content(document, element, "type", depend_type);
         }
@@ -116,6 +122,7 @@ impl TryFrom<&str> for Dependency {
             .get(2)
             .ok_or(DependencyParseError::MissingVersion)?
             .to_string();
+        let version = StringOrVariable::String(version);
         // TODO: Add support for type, scope, and classifier.
 
         let result = Dependency {
@@ -155,16 +162,16 @@ impl HasElementName for Dependency {
     }
 }
 impl ElementConverter for Dependency {
-    from_element_using_builder!(
+    typed_from_element_using_builder!(
         DependencyBuilder,
         element,
         document,
-        "groupId" => group_id,
-        "artifactId" => artifact_id,
-        "version" => version,
-        "type" => depend_type,
-        "scope" => scope,
-        "classifier" => classifier
+        "groupId"(String) => group_id,
+        "artifactId"(String) => artifact_id,
+        "version"(StringOrVariable) => version,
+        "type"(String) => depend_type,
+        "scope"(String) => scope,
+        "classifier"(String) => classifier
     );
     fn into_children(self, document: &mut Document) -> Result<Vec<Element>, XMLEditorError> {
         let Self {
@@ -201,7 +208,7 @@ mod tests {
         let dep = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.1-jre".to_string(),
+            version: "30.1-jre".parse().unwrap(),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -215,7 +222,7 @@ mod tests {
         let dep = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.1-jre".to_string(),
+            version: "30.1-jre".parse().unwrap(),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -223,7 +230,7 @@ mod tests {
         let dep2 = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.2-jre".to_string(),
+            version: "30.2-jre".parse().unwrap(),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -262,7 +269,7 @@ mod tests {
             Dependency {
                 group_id: "com.google.guava".to_string(),
                 artifact_id: "guava".to_string(),
-                version: "30.1-jre".to_string(),
+                version: "30.1-jre".parse().unwrap(),
                 depend_type: Some("jar".to_string()),
                 scope: Some("compile".to_string()),
                 classifier: Some("tests".to_string()),
@@ -286,7 +293,7 @@ mod tests {
             Dependency {
                 group_id: "com.google.guava".to_string(),
                 artifact_id: "guava".to_string(),
-                version: "30.1-jre".to_string(),
+                version: "30.1-jre".parse().unwrap(),
                 ..Default::default()
             },
         )?;

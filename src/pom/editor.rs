@@ -231,7 +231,7 @@ mod tests {
         let dependency = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.1-jre".to_string(),
+            version: "30.1-jre".to_string().try_into().unwrap(),
             depend_type: None,
             scope: None,
             classifier: None,

@@ -112,25 +112,24 @@ pub trait ChildOfListElement: ElementConverter {
     fn parent_element_name() -> &'static str;
 }
 #[derive(Debug, Error)]
-pub struct InvalidValueError {
-    pub expected: &'static str,
-    pub found: String,
-    pub source_element: Option<&'static str>,
+pub enum InvalidValueError {
+    InvalidValue {
+        expected: &'static str,
+        found: String,
+    },
+    InvalidFormattedValue {
+        error: String,
+    },
 }
 impl Display for InvalidValueError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(source_element) = self.source_element {
-            write!(
-                f,
-                "Invalid Value for {}. Expected {}, found {}",
-                source_element, self.expected, self.found
-            )
-        } else {
-            write!(
-                f,
-                "Invalid Value. Expected {}, found {}",
-                self.expected, self.found
-            )
+        match self {
+            InvalidValueError::InvalidValue { expected, found } => {
+                write!(f, "Expected {} found {}", expected, found)
+            }
+            InvalidValueError::InvalidFormattedValue { error } => {
+                write!(f, "Invalid Value: {}", error)
+            }
         }
     }
 }
@@ -158,10 +157,9 @@ impl PomValue for bool {
         match value {
             "true" => Ok(true),
             "false" => Ok(false),
-            _ => Err(InvalidValueError {
+            _ => Err(InvalidValueError::InvalidValue {
                 expected: "true or false",
                 found: value.to_string(),
-                source_element: None,
             }),
         }
     }
@@ -191,10 +189,9 @@ macro_rules! pom_value_num {
         $(
             impl PomValue for $type {
                 fn from_str_for_editor(value: &str) -> Result<Self, InvalidValueError> {
-                    value.parse().map_err(|_| InvalidValueError {
+                    value.parse().map_err(|_| InvalidValueError::InvalidValue {
                         expected: "A number",
                         found: value.to_string(),
-                        source_element: None,
                     })
                 }
 

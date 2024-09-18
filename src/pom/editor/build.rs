@@ -83,7 +83,10 @@ impl<'a> BuildEditor<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::pom::editor::{build::Plugin, PomEditor};
+    use crate::{
+        pom::editor::{build::Plugin, PomEditor},
+        types::StringOrVariable,
+    };
 
     #[test]
     pub fn test_plugins() -> anyhow::Result<()> {
@@ -95,7 +98,7 @@ mod tests {
             let plugin = Plugin {
                 group_id: "org.apache.maven.plugins".to_string(),
                 artifact_id: "maven-compiler-plugin".to_string(),
-                version: "3.8.1".to_string(),
+                version: StringOrVariable::String("3.8.1".to_string()),
             };
             build_editor.add_or_update_plugin(plugin.clone())?;
             let plugins = build_editor.get_plugins()?;

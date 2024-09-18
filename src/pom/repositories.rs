@@ -205,10 +205,9 @@ impl PomValue for ChecksumPolicy {
             "ignore" => Ok(ChecksumPolicy::Ignore),
             "fail" => Ok(ChecksumPolicy::Fail),
             "warn" => Ok(ChecksumPolicy::Warn),
-            _ => Err(InvalidValueError {
+            _ => Err(InvalidValueError::InvalidValue {
                 expected: "ignore, fail, or warn",
                 found: value.to_owned(),
-                source_element: None,
             }),
         }
     }
@@ -228,10 +227,9 @@ impl PomValue for RepositoryLayout {
         match value {
             "default" => Ok(RepositoryLayout::Default),
             "legacy" => Ok(RepositoryLayout::Legacy),
-            _ => Err(InvalidValueError {
+            _ => Err(InvalidValueError::InvalidValue {
                 expected: "default or legacy",
                 found: value.to_owned(),
-                source_element: None,
             }),
         }
     }
@@ -257,25 +255,23 @@ impl FromStr for UpdatePolicy {
             "never" => Ok(UpdatePolicy::Never),
             other => {
                 if other.starts_with("interval:") {
-                    let interval =
-                        other
-                            .strip_prefix("interval:")
-                            .ok_or_else(|| InvalidValueError {
-                                expected: "interval:<number>",
-                                found: other.to_owned(),
-                                source_element: None,
-                            })?;
-                    let interval: usize = interval.parse().map_err(|_| InvalidValueError {
-                        expected: "interval:<number>",
-                        found: other.to_owned(),
-                        source_element: None,
+                    let interval = other.strip_prefix("interval:").ok_or_else(|| {
+                        InvalidValueError::InvalidValue {
+                            expected: "interval:<number>",
+                            found: other.to_owned(),
+                        }
                     })?;
+                    let interval: usize =
+                        interval
+                            .parse()
+                            .map_err(|_| InvalidValueError::InvalidFormattedValue {
+                                error: interval.to_string(),
+                            })?;
                     Ok(UpdatePolicy::Interval(interval))
                 } else {
-                    Err(InvalidValueError {
+                    Err(InvalidValueError::InvalidValue {
                         expected: "always, daily, never, or interval:<number>",
                         found: other.to_owned(),
-                        source_element: None,
                     })
                 }
             }

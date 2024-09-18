@@ -1,9 +1,13 @@
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
-use crate::editor::{
-    utils::{create_basic_text_element, find_element_or_err},
-    ChildOfListElement, ElementConverter, HasElementName, UpdatableElement, XMLEditorError,
+use crate::{
+    editor::{
+        utils::{create_basic_text_element, find_element_or_err},
+        ChildOfListElement, ElementConverter, HasElementName, PomValue, UpdatableElement,
+        XMLEditorError,
+    },
+    types::StringOrVariable,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, Builder)]
@@ -24,7 +28,7 @@ pub struct Plugin {
     pub group_id: String,
     #[serde(rename = "artifactId")]
     pub artifact_id: String,
-    pub version: String,
+    pub version: StringOrVariable,
     // TODO Add configuration
 }
 impl Plugin {
@@ -48,7 +52,10 @@ impl ElementConverter for Plugin {
         let group_id = find_element_or_err(element, "groupId", document)?.text_content(document);
         let artifact_id =
             find_element_or_err(element, "artifactId", document)?.text_content(document);
-        let version = find_element_or_err(element, "version", document)?.text_content(document);
+        let version = StringOrVariable::from_element(
+            find_element_or_err(element, "version", document)?,
+            document,
+        )?;
         Ok(Self {
             group_id,
             artifact_id,
@@ -86,7 +93,7 @@ impl UpdatableElement for Plugin {
         document: &mut edit_xml::Document,
     ) -> Result<(), XMLEditorError> {
         let version = find_element_or_err(element, "version", document)?;
-        version.set_text_content(document, self.version.clone());
+        version.set_text_content(document, self.version.to_string());
         Ok(())
     }
 }
