@@ -1,14 +1,17 @@
-mod extension;
-pub mod local_config;
-pub mod maven_metadata;
+pub mod extension;
+#[cfg(feature = "resolver")]
+pub mod resolver;
+
+pub mod editor;
+pub mod meta;
 pub mod pom;
-pub mod snapshot_metadata;
-pub mod time;
-
-pub use extension::MavenFileExtension;
+pub mod settings;
+pub mod types;
+pub mod utils;
+// Re-export quick_xml
 pub use quick_xml;
-use thiserror::Error;
 
+use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Failed to read {0}")]
