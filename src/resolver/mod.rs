@@ -1,12 +1,12 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
-use std::fmt::Debug;
+use std::{borrow::Cow, fmt::Debug};
 
 use reqwest::header::HeaderValue;
 use url::Url;
 
 use crate::settings::Server;
 
-pub trait ResolableRepository: Debug {
+pub trait ResolvableRepository: Debug {
     /// The repository ID
     fn id(&self) -> Option<&str> {
         None
@@ -32,27 +32,57 @@ pub trait ResolableRepository: Debug {
         }
     }
 }
-impl<T> ResolableRepository for &T
+impl<T> ResolvableRepository for &T
 where
-    T: ResolableRepository,
+    T: ResolvableRepository,
 {
     fn base_url(&self) -> &str {
         (*self).base_url()
     }
+    fn authentication_header(&self) -> Option<HeaderValue> {
+        (*self).authentication_header()
+    }
+    fn has_authentication(&self) -> bool {
+        (*self).has_authentication()
+    }
+    fn id(&self) -> Option<&str> {
+        (*self).id()
+    }
+    fn create_url_with_path(&self, path: &str) -> Result<Url, url::ParseError> {
+        (*self).create_url_with_path(path)
+    }
 }
-impl ResolableRepository for &str {
+impl<T: ResolvableRepository + Clone> ResolvableRepository for Cow<'_, T> {
+    fn base_url(&self) -> &str {
+        self.as_ref().base_url()
+    }
+    fn authentication_header(&self) -> Option<HeaderValue> {
+        self.as_ref().authentication_header()
+    }
+    fn has_authentication(&self) -> bool {
+        self.as_ref().has_authentication()
+    }
+    fn id(&self) -> Option<&str> {
+        self.as_ref().id()
+    }
+    fn create_url_with_path(&self, path: &str) -> Result<Url, url::ParseError> {
+        self.as_ref().create_url_with_path(path)
+    }
+}
+
+impl ResolvableRepository for &str {
     fn base_url(&self) -> &str {
         *self
     }
 }
 
-impl ResolableRepository for str {
+impl ResolvableRepository for str {
     fn base_url(&self) -> &str {
         self
     }
 }
 
-impl ResolableRepository for String {
+impl ResolvableRepository for String {
     fn base_url(&self) -> &str {
         self.as_str()
     }
@@ -83,7 +113,7 @@ impl FullMavenRepository {
         HeaderValue::from_str(&header_value).unwrap()
     }
 }
-impl ResolableRepository for FullMavenRepository {
+impl ResolvableRepository for FullMavenRepository {
     fn id(&self) -> Option<&str> {
         self.id.as_deref()
     }
@@ -99,9 +129,9 @@ impl ResolableRepository for FullMavenRepository {
 }
 #[cfg(test)]
 mod tests {
-    use super::ResolableRepository;
+    use super::ResolvableRepository;
 
-    fn test_url_create(repo: impl ResolableRepository, path: &str, expected_url: &str) {
+    fn test_url_create(repo: impl ResolvableRepository, path: &str, expected_url: &str) {
         let url = repo.create_url_with_path(path).unwrap();
         assert_eq!(url.as_str(), expected_url);
         println!("URL: {:?}", url);

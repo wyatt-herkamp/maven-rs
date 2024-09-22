@@ -2,12 +2,12 @@
 name = "maven-rs"
 version = "0.1.0"
 edition = "2021"
-
+autoexamples = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-quick-xml = { version = "0.36", features = ["serialize"] }
+quick-xml = { version = "0.36", features = ["serialize", "escape-html"] }
 chrono = { version = "0.4", default-features = false, features = [
     "serde",
     "std",
@@ -34,3 +34,8 @@ resolver = ["reqwest", "url", "bytes", "base64"]
 anyhow = { version = "1" }
 pretty_assertions = { version = "1" }
 tokio = { version = "1", features = ["full"] }
+walkdir = { version = "2" }
+
+[[example]]
+name = "check_against_local_repo"
+required-features = ["local"]

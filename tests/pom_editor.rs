@@ -15,7 +15,7 @@ pub fn test_read_test_pom() -> anyhow::Result<()> {
     let mut dependency = Dependency {
         group_id: "com.google.guava".to_string(),
         artifact_id: "guava".to_string(),
-        version: "29.1-jre".parse().unwrap(),
+        version: Some("29.1-jre".parse().unwrap()),
         depend_type: None,
         scope: None,
         classifier: None,
@@ -23,7 +23,7 @@ pub fn test_read_test_pom() -> anyhow::Result<()> {
     editor.add_or_update_dependency(dependency.clone())?;
     println!("{:#?}", editor.get_dependencies()?);
 
-    dependency.version = "30.1-jre".parse().unwrap();
+    dependency.version = Some("30.1-jre".parse().unwrap());
     editor.add_or_update_dependency(dependency.clone())?;
     println!("{:#?}", editor.get_dependencies()?);
 

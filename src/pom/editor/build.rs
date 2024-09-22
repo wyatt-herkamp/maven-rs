@@ -96,9 +96,9 @@ mod tests {
             build_editor.set_source_directory("src/main/java");
             build_editor.set_final_name("test");
             let plugin = Plugin {
-                group_id: "org.apache.maven.plugins".to_string(),
+                group_id: Some("org.apache.maven.plugins".to_string()),
                 artifact_id: "maven-compiler-plugin".to_string(),
-                version: StringOrVariable::String("3.8.1".to_string()),
+                version: Some(StringOrVariable::String("3.8.1".to_string())),
             };
             build_editor.add_or_update_plugin(plugin.clone())?;
             let plugins = build_editor.get_plugins()?;

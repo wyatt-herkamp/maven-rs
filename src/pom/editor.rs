@@ -12,7 +12,7 @@
 
 use std::io::Write;
 
-use edit_xml::{Document, EditXMLError, Element, WriteOptions};
+use edit_xml::{Document, Element, ReadOptions, WriteOptions};
 mod build;
 use crate::editor::{
     utils::{add_or_update_item, find_element, get_all_children_of_element, MissingElementError},
@@ -101,7 +101,13 @@ impl PomEditor {
     // TODO: Repositories, pluginRepositories
     // Loads a pom from a string
     pub fn load_from_str(value: &str) -> Result<Self, XMLEditorError> {
-        let document = Document::parse_str(value)?;
+        let document = Document::parse_str_with_opts(
+            value,
+            ReadOptions {
+                require_decl: false,
+                ..Default::default()
+            },
+        )?;
         Self::assert_requirements_for_pom(&document)?;
         Ok(Self {
             document,
@@ -110,7 +116,13 @@ impl PomEditor {
     }
     // Loads a pom from a reader
     pub fn load_from_reader<R: std::io::Read>(reader: R) -> Result<Self, XMLEditorError> {
-        let document = Document::parse_reader(reader)?;
+        let document = Document::parse_reader_with_opts(
+            reader,
+            ReadOptions {
+                require_decl: false,
+                ..Default::default()
+            },
+        )?;
         Self::assert_requirements_for_pom(&document)?;
         Ok(Self {
             document,
@@ -235,7 +247,7 @@ mod tests {
         let dependency = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.1-jre".to_string().try_into().unwrap(),
+            version: Some("30.1-jre".parse().unwrap()),
             depend_type: None,
             scope: None,
             classifier: None,

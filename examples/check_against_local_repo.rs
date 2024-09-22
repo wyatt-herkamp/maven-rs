@@ -1,0 +1,48 @@
+use std::path::PathBuf;
+
+use maven_rs::{
+    pom::{editor::PomEditor, Pom},
+    settings::Settings,
+};
+use walkdir::{DirEntry, WalkDir};
+
+pub fn main() -> anyhow::Result<()> {
+    let walk_location = match std::env::var("MAVEN_RS_REPOSITORY_TEST") {
+        Ok(ok) => PathBuf::from(ok),
+        Err(_) => Settings::read_local_config()?
+            .get_local_repository_or_default()
+            .expect("No Local Repository Found"),
+    };
+    for entry in WalkDir::new(walk_location) {
+        let entry = entry?;
+        if is_pom_file(&entry)? {
+            println!("Attempting to Parse Pom File at {:?}", entry.path());
+            let file_as_string = std::fs::read_to_string(entry.path())?;
+
+            let mut editor_read = PomEditor::load_from_str(file_as_string.as_str())?;
+            {
+                let build = editor_read.build_editor();
+                let plugins = build.get_plugins()?;
+                println!("{:#?}", plugins);
+            }
+            let dependencies = editor_read.get_dependencies()?;
+            println!("{:#?}", dependencies);
+
+            let repositories = editor_read.get_repositories()?;
+            println!("{:#?}", repositories);
+        }
+    }
+    Ok(())
+}
+
+fn is_pom_file(entry: &DirEntry) -> anyhow::Result<bool> {
+    if entry.file_type().is_file() {
+        let path = entry.path();
+        if let Some(ext) = path.extension() {
+            if ext == "pom" {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}

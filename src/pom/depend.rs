@@ -1,11 +1,11 @@
 use std::str::FromStr;
 #[cfg(feature = "resolver")]
-mod resolve;
+pub mod resolve;
 use crate::{
     editor::{
         utils::{
             add_if_present, create_basic_text_element, find_or_create_then_set_text_content,
-            from_element_using_builder, typed_from_element_using_builder,
+            sync_element, typed_from_element_using_builder,
         },
         ChildOfListElement, ElementConverter, HasElementName, UpdatableElement, XMLEditorError,
     },
@@ -33,19 +33,33 @@ pub enum DependencyParseError {
 }
 /// A dependency in a pom file.
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Builder)]
-
+#[serde(rename_all = "camelCase")]
 pub struct Dependency {
     /// The group id of the dependency.
-    #[serde(rename = "groupId")]
+    /// ```xml
+    /// <groupId>com.google.guava</groupId>
+    /// ```
     #[builder(setter(into))]
     pub group_id: String,
-    #[serde(rename = "artifactId")]
+    /// The artifact id of the dependency.
+    /// ```xml
+    /// <artifactId>guava</artifactId>
+    /// ```
     #[builder(setter(into))]
     pub artifact_id: String,
-    #[builder(setter(into))]
-    pub version: StringOrVariable,
-    #[serde(rename = "type")]
+    /// The version of the dependency.
+    ///
+    /// ```xml
+    /// <version>1.0.0</version>
+    /// ```
     #[builder(default, setter(into, strip_option))]
+    pub version: Option<StringOrVariable>,
+    /// The type of the dependency.
+    /// ```xml
+    /// <type>jar</type>
+    /// ```
+    #[builder(default, setter(into, strip_option))]
+    #[serde(rename = "type")]
     pub depend_type: Option<String>,
     #[builder(default, setter(into, strip_option))]
     pub scope: Option<String>,
@@ -62,13 +76,16 @@ impl Dependency {
     }
 
     pub fn pom_name(&self) -> String {
-        format!("{}-{}.pom", self.artifact_id, self.version)
+        let version = self.version.clone().unwrap_or_default();
+        format!("{}-{}.pom", self.artifact_id, version)
     }
     pub fn pom_path(&self) -> String {
+        let version = self.version.clone().unwrap_or_default();
+
         let path = group_id_and_artifact_id_and_version_to_path(
             &self.group_id,
             &self.artifact_id,
-            &self.version.to_string(),
+            &version.to_string(),
         );
         format!("{}/{}", path, self.pom_name())
     }
@@ -87,11 +104,11 @@ impl UpdatableElement for Dependency {
         element: Element,
         document: &mut Document,
     ) -> Result<(), XMLEditorError> {
-        find_or_create_then_set_text_content(
+        sync_element(
             document,
             element,
             "version",
-            &self.version.to_string(),
+            self.version.as_ref().map(|v| v.to_string()),
         );
         if let Some(depend_type) = &self.depend_type {
             find_or_create_then_set_text_content(document, element, "type", depend_type);
@@ -128,7 +145,7 @@ impl TryFrom<&str> for Dependency {
         let result = Dependency {
             group_id,
             artifact_id,
-            version,
+            version: Some(version),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -153,7 +170,8 @@ impl FromStr for Dependency {
 
 impl std::fmt::Display for Dependency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}:{}", self.group_id, self.artifact_id, self.version)
+        let version = self.version.clone().unwrap_or_default();
+        write!(f, "{}:{}:{}", self.group_id, self.artifact_id, version)
     }
 }
 impl HasElementName for Dependency {
@@ -186,8 +204,8 @@ impl ElementConverter for Dependency {
         let mut children = vec![
             create_basic_text_element(document, "groupId", group_id),
             create_basic_text_element(document, "artifactId", artifact_id),
-            create_basic_text_element(document, "version", version),
         ];
+        add_if_present!(document, children, version, "version");
         add_if_present!(document, children, depend_type, "type");
         add_if_present!(document, children, scope, "scope");
         add_if_present!(document, children, classifier, "classifier");
@@ -208,7 +226,7 @@ mod tests {
         let dep = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.1-jre".parse().unwrap(),
+            version: Some("30.1-jre".parse().unwrap()),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -222,7 +240,7 @@ mod tests {
         let dep = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.1-jre".parse().unwrap(),
+            version: Some("30.1-jre".parse().unwrap()),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -230,7 +248,7 @@ mod tests {
         let dep2 = Dependency {
             group_id: "com.google.guava".to_string(),
             artifact_id: "guava".to_string(),
-            version: "30.2-jre".parse().unwrap(),
+            version: Some("30.2-jre".parse().unwrap()),
             depend_type: None,
             scope: None,
             classifier: None,
@@ -269,7 +287,7 @@ mod tests {
             Dependency {
                 group_id: "com.google.guava".to_string(),
                 artifact_id: "guava".to_string(),
-                version: "30.1-jre".parse().unwrap(),
+                version: Some("30.1-jre".parse().unwrap()),
                 depend_type: Some("jar".to_string()),
                 scope: Some("compile".to_string()),
                 classifier: Some("tests".to_string()),
@@ -293,7 +311,26 @@ mod tests {
             Dependency {
                 group_id: "com.google.guava".to_string(),
                 artifact_id: "guava".to_string(),
-                version: "30.1-jre".parse().unwrap(),
+                version: Some("30.1-jre".parse().unwrap()),
+                ..Default::default()
+            },
+        )?;
+        Ok(())
+    }
+    #[test]
+    pub fn parse_no_version() -> anyhow::Result<()> {
+        let test_value = r#"
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+            </dependency>
+        "#;
+        test_parse_methods(
+            test_value,
+            Dependency {
+                group_id: "com.google.guava".to_string(),
+                artifact_id: "guava".to_string(),
+                version: None,
                 ..Default::default()
             },
         )?;
