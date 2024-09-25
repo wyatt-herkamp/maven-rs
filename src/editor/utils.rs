@@ -1,6 +1,6 @@
 use super::{
-    ChildOfListElement, ElementConverter, HasElementName, PomValue, UpdatableElement,
-    XMLEditorError,
+    ChildOfListElement, ComparableElement, ElementConverter, HasElementName, PomValue,
+    UpdatableElement, XMLEditorError,
 };
 use edit_xml::{Document, Element};
 use thiserror::Error;
@@ -112,7 +112,11 @@ pub(crate) fn add_or_update_item<I>(
     item: I,
 ) -> Result<Option<I>, XMLEditorError>
 where
-    I: UpdatableElement + ElementConverter + ChildOfListElement + HasElementName,
+    I: UpdatableElement
+        + ElementConverter
+        + ChildOfListElement
+        + HasElementName
+        + ComparableElement,
 {
     let Some(parent_container) = parent_element else {
         // No dependencies element found, create it and add the dependency

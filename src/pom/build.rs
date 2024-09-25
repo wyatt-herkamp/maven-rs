@@ -7,8 +7,8 @@ use crate::{
             add_if_present, create_basic_text_element, find_element, find_element_or_err,
             sync_element,
         },
-        ChildOfListElement, ElementConverter, HasElementName, PomValue, UpdatableElement,
-        XMLEditorError,
+        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, PomValue,
+        UpdatableElement, XMLEditorError,
     },
     types::StringOrVariable,
 };
@@ -94,11 +94,12 @@ impl ChildOfListElement for Plugin {
         "plugins"
     }
 }
-impl UpdatableElement for Plugin {
+impl ComparableElement for Plugin {
     fn is_same_item(&self, other: &Self) -> bool {
         self.is_same_plugin(other)
     }
-
+}
+impl UpdatableElement for Plugin {
     fn update_element(
         &self,
         element: edit_xml::Element,

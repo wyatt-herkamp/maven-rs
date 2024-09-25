@@ -58,9 +58,6 @@ impl ChildOfListElement for Mirror {
 }
 
 impl UpdatableElement for Mirror {
-    fn is_same_item(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
     fn update_element(
         &self,
         element: edit_xml::Element,

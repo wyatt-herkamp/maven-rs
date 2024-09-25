@@ -7,16 +7,14 @@ use crate::editor::{
 };
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize, Builder)]
+#[serde(rename_all = "camelCase")]
 pub struct Parent {
-    #[serde(rename = "groupId")]
     #[builder(setter(into, strip_option), default)]
     pub group_id: Option<String>,
-    #[serde(rename = "artifactId")]
     #[builder(setter(into, strip_option), default)]
     pub artifact_id: Option<String>,
     #[builder(setter(into, strip_option), default)]
     pub version: Option<String>,
-    #[serde(rename = "relativePath")]
     #[builder(setter(into, strip_option), default)]
     pub relative_path: Option<String>,
 }
@@ -70,10 +68,6 @@ impl UpdatableElement for Parent {
         );
         Ok(())
     }
-
-    fn is_same_item(&self, other: &Self) -> bool {
-        self.group_id == other.group_id && self.artifact_id == other.artifact_id
-    }
 }
 #[cfg(test)]
 mod tests {
@@ -104,22 +98,5 @@ mod tests {
         );
         println!("{:#?}", dep);
         Ok(())
-    }
-    #[test]
-    pub fn test_is_same_item() {
-        let parent = Parent {
-            group_id: Some("dev.wyatt-herkamp".to_string()),
-            artifact_id: Some("test".to_string()),
-            version: Some("1.0.0".to_string()),
-            ..Default::default()
-        };
-        let other = Parent {
-            group_id: Some("dev.wyatt-herkamp".to_string()),
-            artifact_id: Some("test".to_string()),
-            version: Some("0.2".to_string()),
-            relative_path: Some("../pom.xml".to_string()),
-        };
-
-        assert!(parent.is_same_item(&other));
     }
 }

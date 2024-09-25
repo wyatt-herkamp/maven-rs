@@ -28,7 +28,7 @@ pub fn test_read_test_pom() -> anyhow::Result<()> {
     println!("{:#?}", editor.get_dependencies()?);
 
     {
-        let build = editor.build_editor();
+        let build = editor.get_or_create_build_element();
         let plugins = build.get_plugins()?;
         println!("{:#?}", plugins);
     }

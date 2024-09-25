@@ -21,15 +21,28 @@ pub fn main() -> anyhow::Result<()> {
 
             let mut editor_read = PomEditor::load_from_str(file_as_string.as_str())?;
             {
-                let build = editor_read.build_editor();
-                let plugins = build.get_plugins()?;
-                println!("{:#?}", plugins);
+                match editor_read.get_build_element_or_none() {
+                    Some(build) => {
+                        let plugins = build.get_plugins()?;
+                        println!("{:#?}", plugins);
+                    }
+                    None => {
+                        println!("No Build Element Found");
+                    }
+                };
             }
             let dependencies = editor_read.get_dependencies()?;
             println!("{:#?}", dependencies);
 
             let repositories = editor_read.get_repositories()?;
             println!("{:#?}", repositories);
+
+            let developers = editor_read.get_developers()?;
+            println!("{:#?}", developers);
+
+            println!("Parent Element: {:#?}", editor_read.get_parent()?);
+
+            println!("SCM Element: {:#?}", editor_read.get_scm()?);
         }
     }
     Ok(())

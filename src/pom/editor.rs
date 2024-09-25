@@ -15,12 +15,13 @@ use std::io::Write;
 use edit_xml::{Document, Element, ReadOptions, WriteOptions};
 mod build;
 mod dependency_management;
+use super::{depend::Dependency, Developer, Parent, Repository, Scm};
 use crate::editor::{
     utils::{add_or_update_item, find_element, get_all_children_of_element, MissingElementError},
     ElementConverter, UpdatableElement, XMLEditorError,
 };
-
-use super::{depend::Dependency, Parent, Repository};
+pub use build::*;
+pub use dependency_management::*;
 
 /// A struct that allows editing and creating pom files
 /// A pom file is an xml file that follows the maven pom schema
@@ -44,16 +45,20 @@ impl Default for PomEditor {
                 "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd",
             )
             .push_to(&mut document, container);
-        Self {
+        let mut editor = Self {
             document,
             ident_level: 2,
-        }
+        };
+
+        editor.set_name("4.0.0");
+        editor
     }
 }
 macro_rules! top_level_getter_setter {
     (
         $set:ident, $get:ident, $name:literal
     ) => {
+        #[doc = concat!("Sets the ", $name, " of the pom file")]
         pub fn $set(&mut self, value: &str) {
             let root = self.root();
             let element = crate::editor::utils::get_or_create_top_level_element(
@@ -64,41 +69,84 @@ macro_rules! top_level_getter_setter {
 
             element.set_text_content(&mut self.document, value);
         }
+        #[doc = concat!("Gets the ", $name, " of the pom file")]
         pub fn $get(&self) -> Option<String> {
             let root = self.root();
             let element = crate::editor::utils::find_element(root, $name, &self.document);
             return element.map(|x| x.text_content(&self.document));
         }
     };
+    [
+        $(
+            (
+                $set:ident, $get:ident, $name:literal
+            )
+        ),*
+    ] => {
+        $(
+            top_level_getter_setter!($set, $get, $name);
+        )*
+    };
+
+}
+macro_rules! top_level_structured_type {
+    (
+        set: $set:ident,
+        get: $get:ident,
+        $element_name:literal => $structured_type:ident,
+    ) => {
+        #[doc = concat!("Gets the ", $element_name, " of the pom file")]
+        #[doc = "Returns None if the element does not exist"]
+        #[doc = "# Notes"]
+        #[doc = "Why doesn't this work like [BuildEditor] or [DependencyManagementEditor]?"]
+        #[doc = "This structure is very simple.  It is easier to just use a simple structure."]
+        pub fn $get(&self) -> Result<Option<$structured_type>, XMLEditorError> {
+            let root = self.root();
+            find_element(root, $element_name, &self.document)
+                .map(|x| $structured_type::from_element(x, &self.document))
+                .transpose()
+        }
+        /// Sets the parent of the pom file
+        pub fn $set(&mut self, value: $structured_type) -> Result<(), XMLEditorError> {
+            let root = self.root();
+            if let Some(element) = find_element(root, $element_name, &self.document) {
+                value.update_element(element, &mut self.document)?;
+            }
+            let new_element = value.into_element(&mut self.document)?;
+            root.push_child(&mut self.document, new_element.into())?;
+            Ok(())
+        }
+    };
 }
 impl PomEditor {
+    /// Creates a new [PomEditor] with the group id and artifact id set
     pub fn new_with_group_and_artifact(group_id: &str, artifact_id: &str) -> Self {
         let mut editor = Self::default();
         editor.set_group_id(group_id);
         editor.set_artifact_id(artifact_id);
         editor
     }
-    pub fn get_parent(&self) -> Result<Option<Parent>, XMLEditorError> {
-        let root = self.root();
-        find_element(root, "parent", &self.document)
-            .map(|x| Parent::from_element(x, &self.document))
-            .transpose()
-    }
-    pub fn set_parent(&mut self, parent: Parent) -> Result<(), XMLEditorError> {
-        let root = self.root();
-        let parent_element = find_element(root, "parent", &self.document);
-        if let Some(parent_element) = parent_element {
-            parent.update_element(parent_element, &mut self.document)?;
-        }
-        let new_parent_element = parent.into_element(&mut self.document)?;
-        root.push_child(&mut self.document, new_parent_element.into())?;
-        Ok(())
-    }
-    top_level_getter_setter!(set_group_id, get_group_id, "groupId");
-    top_level_getter_setter!(set_artifact_id, get_artifact_id, "artifactId");
-    top_level_getter_setter!(set_version, get_version, "version");
-    top_level_getter_setter!(set_name, get_name, "name");
-    top_level_getter_setter!(set_description, get_description, "description");
+    top_level_structured_type!(
+        set: set_parent,
+        get: get_parent,
+        "parent" => Parent,
+    );
+    top_level_structured_type!(
+        set: set_scm,
+        get: get_scm,
+        "scm" => Scm,
+    );
+    top_level_getter_setter![
+        (set_group_id, get_group_id, "groupId"),
+        (set_artifact_id, get_artifact_id, "artifactId"),
+        (set_version, get_version, "version"),
+        (set_name, get_name, "name"),
+        (set_description, get_description, "description"),
+        (get_model_version, set_model_version, "modelVersion"),
+        (set_url, get_url, "url"),
+        (set_packaging, get_packaging, "packaging")
+    ];
+
     // TODO: Repositories, pluginRepositories
     // Loads a pom from a string
     pub fn load_from_str(value: &str) -> Result<Self, XMLEditorError> {
@@ -115,7 +163,10 @@ impl PomEditor {
             ident_level: 2,
         })
     }
-    // Loads a pom from a reader
+    /// Loads a pom from a reader
+    ///
+    /// # Errors
+    /// If the xml is not a valid pom file
     pub fn load_from_reader<R: std::io::Read>(reader: R) -> Result<Self, XMLEditorError> {
         let document = Document::parse_reader_with_opts(
             reader,
@@ -130,6 +181,8 @@ impl PomEditor {
             ident_level: 2,
         })
     }
+
+    /// Assets that the document has an root element of project
     fn assert_requirements_for_pom(document: &Document) -> Result<(), XMLEditorError> {
         let root = document
             .root_element()
@@ -142,6 +195,7 @@ impl PomEditor {
         }
         Ok(())
     }
+    /// Gets all the repositories in the pom file
     pub fn get_repositories(&self) -> Result<Vec<Repository>, XMLEditorError> {
         let root = self.root();
         let Some(repositories_element) = find_element(root, "repositories", &self.document) else {
@@ -151,6 +205,7 @@ impl PomEditor {
             get_all_children_of_element::<Repository>(&self.document, repositories_element)?;
         Ok(result.into_iter().map(|(repo, _)| repo).collect())
     }
+    /// Adds or Updates a repository in the pom file
     pub fn add_or_update_repository(
         &mut self,
         repository: Repository,
@@ -159,6 +214,26 @@ impl PomEditor {
         let repositories_element = find_element(root, "repositories", &self.document);
         add_or_update_item(&mut self.document, repositories_element, root, repository)
     }
+
+    /// Gets all the repositories in the pom file
+    pub fn get_developers(&self) -> Result<Vec<Developer>, XMLEditorError> {
+        let root = self.root();
+        let Some(list_element) = find_element(root, "developers", &self.document) else {
+            return Ok(vec![]);
+        };
+        let result = get_all_children_of_element::<Developer>(&self.document, list_element)?;
+        Ok(result.into_iter().map(|(repo, _)| repo).collect())
+    }
+    /// Adds or Updates a repository in the pom file
+    pub fn add_or_update_developer(
+        &mut self,
+        developer: Developer,
+    ) -> Result<Option<Developer>, XMLEditorError> {
+        let root = self.root();
+        let list_element = find_element(root, "developers", &self.document);
+        add_or_update_item(&mut self.document, list_element, root, developer)
+    }
+    /// Gets all the dependencies in the pom file
     pub fn get_dependencies(&self) -> Result<Vec<Dependency>, XMLEditorError> {
         let root = self.root();
         let Some(dependencies_element) = find_element(root, "dependencies", &self.document) else {
@@ -168,6 +243,7 @@ impl PomEditor {
             get_all_children_of_element::<Dependency>(&self.document, dependencies_element)?;
         Ok(result.into_iter().map(|(depend, _)| depend).collect())
     }
+    /// Adds or Updates a dependency in the pom file
     pub fn add_or_update_dependency(
         &mut self,
         dependency: Dependency,
@@ -175,21 +251,6 @@ impl PomEditor {
         let root = self.root();
         let dependencies_element = find_element(root, "dependencies", &self.document);
         add_or_update_item(&mut self.document, dependencies_element, root, dependency)
-    }
-    /// Creates a new build editor
-    ///
-    /// If no build element is present, it will create one
-    ///
-    /// If a build element is present, it will return the existing one
-    pub fn build_editor(&mut self) -> build::BuildEditor<'_> {
-        return build::BuildEditor::new(self);
-    }
-
-    /// Creates a new dependency management editor
-    pub fn dependency_management_editor(
-        &mut self,
-    ) -> dependency_management::DependencyManagement<'_> {
-        return dependency_management::DependencyManagement::new(self);
     }
 
     pub(crate) fn root(&self) -> Element {

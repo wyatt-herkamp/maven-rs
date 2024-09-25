@@ -40,9 +40,6 @@ impl ElementConverter for Properties {
 }
 
 impl UpdatableElement for Properties {
-    fn is_same_item(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
     /// Updating a Properties element means all of the original children are removed and replaced with the new children.
     fn update_element(
         &self,

@@ -11,8 +11,8 @@ use utils::MissingElementError;
 
 use crate::{
     pom::{
-        DependencyBuilderError, ParentBuilderError, PluginBuilderError, RepositoryBuilderError,
-        SubRepositoryRulesBuilderError,
+        DependencyBuilderError, DeveloperBuilderError, ParentBuilderError, PluginBuilderError,
+        RepositoryBuilderError, ScmBuilderError, SubRepositoryRulesBuilderError,
     },
     settings::{MirrorBuilderError, ServerBuilderError},
 };
@@ -53,14 +53,29 @@ macro_rules! builder_err {
             }
         }
     };
+    [
+        $(
+            ($error_type:ident, $pom_type:literal)
+        ),*
+    ] => {
+        $(
+            builder_err!($error_type, $pom_type);
+        )*
+    };
+
 }
-builder_err!(DependencyBuilderError, "Dependency");
-builder_err!(PluginBuilderError, "Plugin");
-builder_err!(ParentBuilderError, "Parent");
-builder_err!(ServerBuilderError, "Server");
-builder_err!(MirrorBuilderError, "Mirror");
-builder_err!(SubRepositoryRulesBuilderError, "SubRepositoryRules");
-builder_err!(RepositoryBuilderError, "Repository");
+
+builder_err![
+    (DependencyBuilderError, "Dependency"),
+    (PluginBuilderError, "Plugin"),
+    (ParentBuilderError, "Parent"),
+    (ServerBuilderError, "Server"),
+    (MirrorBuilderError, "Mirror"),
+    (SubRepositoryRulesBuilderError, "SubRepositoryRules"),
+    (RepositoryBuilderError, "Repository"),
+    (ScmBuilderError, "Scm"),
+    (DeveloperBuilderError, "Developer")
+];
 pub trait HasElementName {
     fn element_name() -> &'static str;
 }
@@ -82,11 +97,13 @@ pub trait ElementConverter: Sized {
 
     fn into_children(self, document: &mut Document) -> Result<Vec<Element>, XMLEditorError>;
 }
-/// Used Internally for updating a type of element.
-pub trait UpdatableElement: ElementConverter {
+pub trait ComparableElement {
     /// Checks if the current element is the same as the other element.
     /// Some implementations may only check a subset of fields. Such as [Dependency](crate::pom::Dependency) only checking the group id and artifact id.
     fn is_same_item(&self, other: &Self) -> bool;
+}
+/// Used Internally for updating a type of element.
+pub trait UpdatableElement: ElementConverter {
     // Updates the element with the current element.
     fn update_element(
         &self,

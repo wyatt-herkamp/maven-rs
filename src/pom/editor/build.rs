@@ -7,6 +7,40 @@ use crate::{
 };
 
 use super::PomEditor;
+impl PomEditor {
+    /// Creates a new build editor
+    ///
+    /// If no build element is present, it will create one
+    /// # Note.
+    /// This function will hold a mutable reference to the PomEditor.
+    /// I would recommend using this function within a scope. To prevent borrowing issues.
+    pub fn get_or_create_build_element(&mut self) -> BuildEditor<'_> {
+        return BuildEditor::new(self);
+    }
+    /// Checks if the build element is present in the pom file
+    ///
+    /// If the build element is present, it will return Some(BuildEditor) else it will return None
+    pub fn get_build_element_or_none(&mut self) -> Option<BuildEditor<'_>> {
+        if self.has_build() {
+            return Some(BuildEditor::new(self));
+        }
+        return None;
+    }
+    pub fn has_build(&self) -> bool {
+        let root = self.root();
+        find_element(root, "build", &self.document).is_some()
+    }
+    pub fn delete_build(&mut self) -> Result<bool, XMLEditorError> {
+        let root = self.root();
+        let element = find_element(root, "build", &self.document);
+        if let Some(element) = element {
+            element.detach(&mut self.document)?;
+            return Ok(true);
+        } else {
+            return Ok(false);
+        }
+    }
+}
 /// Allows for editing the build section of a pom file
 #[derive(Debug)]
 pub struct BuildEditor<'a> {
@@ -92,7 +126,7 @@ mod tests {
     pub fn test_plugins() -> anyhow::Result<()> {
         let mut editor = PomEditor::new_with_group_and_artifact("dev.wyatt-herkamp", "test");
         {
-            let mut build_editor = editor.build_editor();
+            let mut build_editor = editor.get_or_create_build_element();
             build_editor.set_source_directory("src/main/java");
             build_editor.set_final_name("test");
             let plugin = Plugin {

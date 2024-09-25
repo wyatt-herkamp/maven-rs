@@ -11,8 +11,8 @@ use crate::{
             add_if_present, find_or_create_then_set_text_content, sync_element,
             typed_from_element_using_builder,
         },
-        ChildOfListElement, ElementConverter, HasElementName, InvalidValueError, PomValue,
-        UpdatableElement,
+        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, InvalidValueError,
+        PomValue, UpdatableElement,
     },
     utils::serde_utils::serde_via_string_types,
 };
@@ -52,13 +52,15 @@ impl ChildOfListElement for Repository {
         "repositories"
     }
 }
-impl UpdatableElement for Repository {
+impl ComparableElement for Repository {
     fn is_same_item(&self, other: &Self) -> bool {
         if self.name.is_none() {
             return false;
         }
         self.name == other.name
     }
+}
+impl UpdatableElement for Repository {
     fn update_element(
         &self,
         element: Element,

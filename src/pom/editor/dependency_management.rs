@@ -9,14 +9,57 @@ use crate::{
 };
 
 use super::PomEditor;
-
+impl PomEditor {
+    /// Creates a new [DependencyManagementEditor]
+    ///
+    /// If no `dependencyManagement` element is present, it will create one
+    /// # Note.
+    /// This function will hold a mutable reference to the PomEditor.
+    /// I would recommend using this function within a scope. To prevent borrowing issues.
+    pub fn get_or_create_dependency_management_element(
+        &mut self,
+    ) -> DependencyManagementEditor<'_> {
+        return DependencyManagementEditor::new(self);
+    }
+    /// Checks if the `dependencyManagement` element is present in the pom file
+    ///
+    /// If the element is present, it will return Some(BuildEditor) else it will return None
+    pub fn get_dependency_management_element_or_none(
+        &mut self,
+    ) -> Option<DependencyManagementEditor<'_>> {
+        if self.has_build() {
+            return Some(DependencyManagementEditor::new(self));
+        }
+        return None;
+    }
+    /// Checks if the `dependencyManagement` element is present in the pom file
+    ///
+    /// If the `dependencyManagement` element is present, it will return true else it will return false
+    pub fn has_dependency_management(&self) -> bool {
+        let root = self.root();
+        find_element(root, "dependencyManagement", &self.document).is_some()
+    }
+    /// Deletes the `dependencyManagement` element from the pom file
+    ///
+    /// If the `dependencyManagement` element is present, it will delete it and return true else it will return false
+    pub fn delete_dependency_management(&mut self) -> Result<bool, XMLEditorError> {
+        let root = self.root();
+        let element = find_element(root, "dependencyManagement", &self.document);
+        if let Some(element) = element {
+            element.detach(&mut self.document)?;
+            return Ok(true);
+        } else {
+            return Ok(false);
+        }
+    }
+}
 #[derive(Debug)]
-pub struct DependencyManagement<'a> {
+pub struct DependencyManagementEditor<'a> {
     parent: &'a mut PomEditor,
     dependency_management_element: Element,
 }
 
-impl<'a> DependencyManagement<'a> {
+impl<'a> DependencyManagementEditor<'a> {
     pub(super) fn new(parent: &'a mut PomEditor) -> Self {
         let root = parent.root();
         let build_element = crate::editor::utils::get_or_create_top_level_element(
@@ -29,6 +72,7 @@ impl<'a> DependencyManagement<'a> {
             dependency_management_element: build_element,
         }
     }
+
     pub fn get_dependencies(&self) -> Result<Vec<Dependency>, XMLEditorError> {
         let Some(dependencies_element) = find_element(
             self.dependency_management_element,
@@ -77,7 +121,11 @@ mod tests {
         </project>
         "#;
         let mut editor = PomEditor::load_from_str(xml).unwrap();
-        let dependency_management = editor.dependency_management_editor();
+        assert!(
+            !editor.has_dependency_management(),
+            "Should not have dependency management"
+        );
+        let dependency_management = editor.get_or_create_dependency_management_element();
         let dependencies = dependency_management.get_dependencies().unwrap();
         assert_eq!(dependencies.len(), 0);
         Ok(())
@@ -89,11 +137,43 @@ mod tests {
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/lwjgl-bom-3.3.4.pom");
         let file = std::fs::read_to_string(xml_path)?;
         let mut editor = PomEditor::load_from_str(&file)?;
-        let dependency_management = editor.dependency_management_editor();
+        assert!(
+            editor.has_dependency_management(),
+            "Should have dependency management"
+        );
+        let dependency_management = editor.get_or_create_dependency_management_element();
         let dependencies = dependency_management.get_dependencies().unwrap();
         for dependency in dependencies {
             println!("{:?}", dependency);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn delete_dependency_management() -> anyhow::Result<()> {
+        let xml_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/lwjgl-bom-3.3.4.pom");
+        let file = std::fs::read_to_string(xml_path)?;
+        let mut editor = PomEditor::load_from_str(&file)?;
+        assert!(
+            editor.has_dependency_management(),
+            "Should have dependency management"
+        );
+
+        editor.delete_dependency_management()?;
+
+        assert!(
+            !editor.has_dependency_management(),
+            "Should not have dependency management"
+        );
+        let saved_file = editor.write_to_str()?;
+
+        let editor = PomEditor::load_from_str(&saved_file)?;
+        assert!(
+            !editor.has_dependency_management(),
+            "Should not have dependency management"
+        );
+        println!("{}", saved_file);
         Ok(())
     }
 }

@@ -103,9 +103,6 @@ impl ChildOfListElement for Server {
     }
 }
 impl UpdatableElement for Server {
-    fn is_same_item(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
     /// Will rewrite the entire element with the current element. Because it might be a change from a password to a private key.
     fn update_element(
         &self,

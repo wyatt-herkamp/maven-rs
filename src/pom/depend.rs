@@ -7,7 +7,8 @@ use crate::{
             add_if_present, create_basic_text_element, find_or_create_then_set_text_content,
             sync_element, typed_from_element_using_builder,
         },
-        ChildOfListElement, ElementConverter, HasElementName, UpdatableElement, XMLEditorError,
+        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, UpdatableElement,
+        XMLEditorError,
     },
     types::StringOrVariable,
     utils::group_id_and_artifact_id_and_version_to_path,
@@ -95,10 +96,12 @@ impl ChildOfListElement for Dependency {
         "dependencies"
     }
 }
-impl UpdatableElement for Dependency {
+impl ComparableElement for Dependency {
     fn is_same_item(&self, other: &Self) -> bool {
         self.is_same_dependency(other)
     }
+}
+impl UpdatableElement for Dependency {
     fn update_element(
         &self,
         element: Element,
