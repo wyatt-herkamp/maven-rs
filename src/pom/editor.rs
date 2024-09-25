@@ -14,6 +14,7 @@ use std::io::Write;
 
 use edit_xml::{Document, Element, ReadOptions, WriteOptions};
 mod build;
+mod dependency_management;
 use crate::editor::{
     utils::{add_or_update_item, find_element, get_all_children_of_element, MissingElementError},
     ElementConverter, UpdatableElement, XMLEditorError,
@@ -182,6 +183,13 @@ impl PomEditor {
     /// If a build element is present, it will return the existing one
     pub fn build_editor(&mut self) -> build::BuildEditor<'_> {
         return build::BuildEditor::new(self);
+    }
+
+    /// Creates a new dependency management editor
+    pub fn dependency_management_editor(
+        &mut self,
+    ) -> dependency_management::DependencyManagement<'_> {
+        return dependency_management::DependencyManagement::new(self);
     }
 
     pub(crate) fn root(&self) -> Element {
