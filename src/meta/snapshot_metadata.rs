@@ -1,6 +1,7 @@
-use crate::MavenFileExtension;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+
+use crate::extension::MavenFileExtension;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SnapshotMetadata {
@@ -9,7 +10,7 @@ pub struct SnapshotMetadata {
     #[serde(rename = "artifactId")]
     pub artifact_id: String,
     pub version: String,
-    pub versioning: Versioning,
+    pub versioning: SnapshotVersioning,
 }
 
 impl SnapshotMetadata {
@@ -34,10 +35,10 @@ impl SnapshotMetadata {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Versioning {
+pub struct SnapshotVersioning {
     pub snapshot: Option<Snapshot>,
     pub snapshot_versions: Option<SnapshotVersions>,
-    #[serde(with = "crate::time::standard_time")]
+    #[serde(with = "crate::utils::time::standard_time")]
     pub last_updated: Option<NaiveDateTime>,
 }
 
@@ -50,7 +51,7 @@ pub struct SnapshotVersions {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
-    #[serde(with = "crate::time::snapshot_time")]
+    #[serde(with = "crate::utils::time::snapshot_time")]
     pub timestamp: Option<NaiveDateTime>,
     pub build_number: String,
 }
@@ -61,7 +62,7 @@ pub struct SnapshotVersion {
     #[serde(default)]
     pub extension: String,
     pub value: String,
-    #[serde(with = "crate::time::standard_time")]
+    #[serde(with = "crate::utils::time::standard_time")]
     pub updated: Option<NaiveDateTime>,
 }
 
@@ -72,42 +73,22 @@ impl PartialEq<MavenFileExtension> for SnapshotVersion {
 }
 
 #[cfg(test)]
-pub mod test {
-    use crate::snapshot_metadata::SnapshotMetadata;
-    use crate::{MavenFileExtension, MANIFEST};
-    use std::io::BufReader;
-    use std::path::PathBuf;
+mod test {
+    use pretty_assertions::assert_eq;
 
     #[test]
-    pub fn load_kakara_engine_metadata() {
-        let buf = PathBuf::from(MANIFEST)
-            .join("tests")
-            .join("data")
-            .join("kakara-engine")
-            .join("snapshot.xml");
-        if !buf.exists() {
-            panic!("Test file not found");
-        }
-        let file = std::fs::File::open(buf).unwrap();
-        let snapshot_meta: SnapshotMetadata =
-            quick_xml::de::from_reader(BufReader::new(file)).unwrap();
-        if let Some(value) = snapshot_meta.get_latest_artifact_name("jar") {
-            println!("{}", value);
-        }
-        let extension = MavenFileExtension {
-            hash: Some("sha256".to_owned()),
-            file_extension: "jar".to_owned(),
-            classifier: Some("sources".to_owned()),
-        };
-        if let Some(value) = snapshot_meta.get_latest_artifact_name(extension) {
-            println!("{}", value);
-        }
-        if let Some(value) = snapshot_meta
-            .get_latest_artifact_name(MavenFileExtension::from("jar").with_classifier("javadoc"))
-        {
-            println!("{}", value);
-        }
-
-        println!("{:#?}", snapshot_meta);
+    pub fn parse_snapshot() {
+        let test = r#"
+            <snapshot>
+                <timestamp>20210101.010101</timestamp>
+                <buildNumber>1</buildNumber>
+            </snapshot>
+        "#;
+        let snapshot: super::Snapshot = quick_xml::de::from_str(test).unwrap();
+        assert_eq!(
+            snapshot.timestamp.unwrap().to_string(),
+            "2021-01-01 01:01:01"
+        );
+        assert_eq!(snapshot.build_number, "1");
     }
 }

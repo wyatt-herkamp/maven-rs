@@ -1,6 +1,7 @@
-use crate::MavenFileExtension;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+
+use crate::extension::MavenFileExtension;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeployMetadata {
@@ -8,7 +9,7 @@ pub struct DeployMetadata {
     pub group_id: String,
     #[serde(rename = "artifactId")]
     pub artifact_id: String,
-    pub versioning: Versioning,
+    pub versioning: StableVersioning,
 }
 
 impl DeployMetadata {
@@ -47,38 +48,45 @@ impl DeployMetadata {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct Versioning {
+pub struct StableVersioning {
     pub release: Option<String>,
     pub latest: Option<String>,
-    pub versions: Versions,
-    #[serde(rename = "lastUpdated", with = "crate::time::standard_time")]
+    pub versions: StableVersions,
+    #[serde(rename = "lastUpdated", with = "crate::utils::time::standard_time")]
     pub last_updated: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct Versions {
+pub struct StableVersions {
     pub version: Vec<String>,
 }
 
 #[cfg(test)]
-pub mod test {
-    use crate::maven_metadata::DeployMetadata;
-    use crate::MANIFEST;
-    use std::io::BufReader;
-    use std::path::PathBuf;
-
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
     #[test]
-    pub fn load_kakara_engine_metadata() {
-        let buf = PathBuf::from(MANIFEST)
-            .join("tests")
-            .join("data")
-            .join("kakara-engine")
-            .join("maven-metadata.xml");
-        if !buf.exists() {
-            panic!("Test file not found");
-        }
-        let file = std::fs::File::open(buf).unwrap();
-        let x: DeployMetadata = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
-        println!("{:#?}", x);
+    pub fn parse_metadata() {
+        let metadata = r#"
+        <metadata>
+            <groupId>org.kakara</groupId>
+            <artifactId>engine</artifactId>
+            <versioning>
+                <latest>1.0-SNAPSHOT</latest>
+                <versions>
+                    <version>1.0-SNAPSHOT</version>
+                </versions>
+                <lastUpdated>20220826191631</lastUpdated>
+            </versioning>
+        </metadata>
+        "#;
+        let metadata: DeployMetadata = quick_xml::de::from_str(metadata).unwrap();
+        assert_eq!(metadata.group_id, "org.kakara");
+        assert_eq!(metadata.artifact_id, "engine");
+        assert_eq!(metadata.versioning.latest, Some("1.0-SNAPSHOT".to_string()));
+        assert_eq!(
+            metadata.versioning.versions.version,
+            vec!["1.0-SNAPSHOT".to_string()]
+        );
     }
 }

@@ -1,33 +1,19 @@
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct Developers {
-    pub developer: Vec<Developer>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct Developer {
-    pub id: Option<String>,
-    pub name: Option<String>,
-    pub email: Option<String>,
-    pub url: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Scm {
-    pub url: Option<String>,
-    pub connection: Option<String>,
-    #[serde(rename = "developerConnection")]
-    pub developer_connection: Option<String>,
-}
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Parent {
-    #[serde(rename = "groupId")]
-    pub group_id: Option<String>,
-    #[serde(rename = "artifactId")]
-    pub artifact_id: Option<String>,
-    pub version: Option<String>,
-}
+mod build;
+mod depend;
+mod developers;
+pub mod editor;
+mod parent;
+mod properties;
+mod repositories;
+mod scm;
+pub use build::*;
+pub use depend::*;
+pub use developers::*;
+pub use parent::*;
+pub use properties::*;
+pub use repositories::*;
+pub use scm::*;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Pom {
     #[serde(rename = "groupId")]
@@ -57,7 +43,7 @@ impl Pom {
     }
 }
 
-#[cfg(all(test))]
+#[cfg(test)]
 pub mod tests {
     use crate::pom::Pom;
     use crate::MANIFEST;

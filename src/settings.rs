@@ -1,26 +1,28 @@
-use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+mod mirrors;
+mod servers;
+pub use mirrors::*;
+pub use servers::*;
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
-    #[serde(rename = "localRepository")]
-    pub local_repository: Option<String>,
+    pub local_repository: Option<PathBuf>,
+    pub interactive_mode: Option<bool>,
+    pub offline: Option<bool>,
+
     #[serde(default)]
     pub servers: Servers,
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct Servers {
-    #[serde(default, rename = "server")]
-    pub servers: Vec<Server>,
+    #[serde(default)]
+    pub mirrors: Mirrors,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct Server {
-    pub id: String,
-    pub username: Option<String>,
-    pub password: Option<String>,
+impl Settings {
+    pub fn get_local_repository(&self) -> Option<PathBuf> {
+        self.local_repository.clone()
+    }
 }
-
 #[cfg(feature = "local")]
 pub mod directories {
     use super::Settings;
@@ -52,9 +54,12 @@ pub mod directories {
 
             quick_xml::de::from_reader(BufReader::new(file)).map_err(Error::from)
         }
-        pub fn get_local_repository(&self) -> Option<PathBuf> {
-            if let Some(ref local_repository) = self.local_repository {
-                Some(PathBuf::from(local_repository))
+        /// Returns the local repository or the default repository.
+        ///
+        /// If None is Returned Home Directory is not found.
+        pub fn get_local_repository_or_default(&self) -> Option<PathBuf> {
+            if let Some(local_repository) = &self.local_repository {
+                Some(local_repository.clone())
             } else {
                 get_settings_directory().and_then(|dir| Some(dir.join("repository")))
             }
@@ -64,19 +69,21 @@ pub mod directories {
 
 #[cfg(all(test, feature = "local"))]
 pub mod tests {
-    use crate::local_config::{Server, Servers, Settings};
+    use crate::settings::{Server, Servers, Settings};
 
     #[test]
     pub fn test_to_string() {
         let settings = Settings {
-            local_repository: Some("test".to_string()),
+            local_repository: None,
             servers: Servers {
                 servers: vec![Server {
                     id: "test".to_string(),
                     username: Some("test".to_string()),
                     password: Some("test".to_string()),
+                    ..Default::default()
                 }],
             },
+            ..Default::default()
         };
 
         println!("{}", quick_xml::se::to_string(&settings).unwrap());
