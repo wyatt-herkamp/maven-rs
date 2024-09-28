@@ -76,13 +76,21 @@ builder_err![
     (ScmBuilderError, "Scm"),
     (DeveloperBuilderError, "Developer")
 ];
+
+/// An element with a specific name.
 pub trait HasElementName {
+    /// The name of the element.
     fn element_name() -> &'static str;
 }
 
+/// Converting an [Element] back and forth to a specific type.
 pub trait ElementConverter: Sized {
+    /// Converts an [Element] to the specific type.
     fn from_element(element: Element, document: &Document) -> Result<Self, XMLEditorError>;
-
+    /// Creates an [Element] from the current type.
+    ///
+    /// Default implementation creates an element with the from [HasElementName::element_name] of the type
+    /// and adds all children returned by [ElementConverter::into_children].
     fn into_element(self, document: &mut Document) -> Result<Element, XMLEditorError>
     where
         Self: HasElementName,
@@ -94,7 +102,7 @@ pub trait ElementConverter: Sized {
         }
         Ok(element)
     }
-
+    /// Creates all children of the current type.
     fn into_children(self, document: &mut Document) -> Result<Vec<Element>, XMLEditorError>;
 }
 pub trait ComparableElement {

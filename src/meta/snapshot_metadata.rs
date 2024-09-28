@@ -2,12 +2,13 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::extension::MavenFileExtension;
-
+/// The metadata for a snapshot.
+///
+/// File name: `maven-metadata.xml`
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct SnapshotMetadata {
-    #[serde(rename = "groupId")]
     pub group_id: String,
-    #[serde(rename = "artifactId")]
     pub artifact_id: String,
     pub version: String,
     pub versioning: SnapshotVersioning,

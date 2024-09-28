@@ -24,7 +24,7 @@ impl PomEditor {
         if self.has_build() {
             return Some(BuildEditor::new(self));
         }
-        return None;
+        None
     }
     pub fn has_build(&self) -> bool {
         let root = self.root();
@@ -35,9 +35,9 @@ impl PomEditor {
         let element = find_element(root, "build", &self.document);
         if let Some(element) = element {
             element.detach(&mut self.document)?;
-            return Ok(true);
+            Ok(true)
         } else {
-            return Ok(false);
+            Ok(false)
         }
     }
 }

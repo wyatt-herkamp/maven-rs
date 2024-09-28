@@ -3,6 +3,9 @@ name = "maven-rs"
 version = "0.1.0"
 edition = "2021"
 autoexamples = false
+authors = ["Wyatt Herkamp <wherkamp@gmail.com>"]
+description = "A library for interacting with Maven files such as POMs and repositories."
+license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -14,7 +17,6 @@ chrono = { version = "0.4", default-features = false, features = [
 ] }
 directories = { version = "5", optional = true }
 thiserror = { version = "1" }
-
 edit-xml = { git = "https://github.com/wyatt-herkamp/edit-xml.git", features = [
     "ahash",
 ] }
@@ -27,6 +29,7 @@ url = { version = "2", optional = true }
 bytes = { version = "1", optional = true }
 base64 = { version = "0.22", optional = true }
 [features]
+default = ["local"]
 local = ["directories"]
 resolver = ["reqwest", "url", "bytes", "base64"]
 

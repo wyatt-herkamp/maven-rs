@@ -30,7 +30,7 @@ impl PomEditor {
         if self.has_build() {
             return Some(DependencyManagementEditor::new(self));
         }
-        return None;
+        None
     }
     /// Checks if the `dependencyManagement` element is present in the pom file
     ///
@@ -47,9 +47,9 @@ impl PomEditor {
         let element = find_element(root, "dependencyManagement", &self.document);
         if let Some(element) = element {
             element.detach(&mut self.document)?;
-            return Ok(true);
+            Ok(true)
         } else {
-            return Ok(false);
+            Ok(false)
         }
     }
 }

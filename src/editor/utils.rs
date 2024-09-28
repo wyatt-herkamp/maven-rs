@@ -119,7 +119,7 @@ where
         + ComparableElement,
 {
     let Some(parent_container) = parent_element else {
-        // No dependencies element found, create it and add the dependency
+        // No parent element found element found, create it and add the dependency
         let dependencies = Element::new(document, I::parent_element_name());
         let value = item.into_element(document)?;
         dependencies.push_child(document, value.into())?;
