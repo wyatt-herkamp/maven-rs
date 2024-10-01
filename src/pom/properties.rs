@@ -50,7 +50,7 @@ impl UpdatableElement for Properties {
         for (key, value) in self.0.iter() {
             let child = edit_xml::Element::new(document, key);
             child.set_text_content(document, value);
-            element.push_child(document, child.into())?;
+            element.push_child(document, child)?;
         }
         Ok(())
     }

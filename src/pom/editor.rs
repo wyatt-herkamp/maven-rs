@@ -17,7 +17,7 @@ mod build;
 mod dependency_management;
 use super::{depend::Dependency, Developer, Parent, Repository, Scm};
 use crate::editor::{
-    utils::{add_or_update_item, find_element, get_all_children_of_element, MissingElementError},
+    utils::{add_or_update_item, get_all_children_of_element, MissingElementError},
     ElementConverter, UpdatableElement, XMLEditorError,
 };
 pub use build::*;
@@ -82,7 +82,7 @@ macro_rules! simple_type_getter_setter {
                 );
                 element.set_text_content(&mut self.document, value);
             }else{
-                let element = crate::editor::utils::find_element(root, $name, &self.document);
+                let element = root.find(&self.document, $name);
                 if let Some(element) = element {
                     element.detach(&mut self.document).expect("Failed to remove element");
                 }
@@ -92,7 +92,7 @@ macro_rules! simple_type_getter_setter {
         $(#[$shared_docs])*
         pub fn $get(&self) -> Option<String> {
             let root = self.root();
-            let element = crate::editor::utils::find_element(root, $name, &self.document);
+            let element = root.find(&self.document, $name);
             return element.map(|x| x.text_content(&self.document));
         }
 
@@ -134,7 +134,7 @@ macro_rules! top_level_structured_type {
         $(#[$get_docs])*
         pub fn $get(&self) -> Result<Option<$structured_type>, XMLEditorError> {
             let root = self.root();
-            find_element(root, $element_name, &self.document)
+            root.find(&self.document, $element_name)
                 .map(|x| $structured_type::from_element(x, &self.document))
                 .transpose()
         }
@@ -144,13 +144,13 @@ macro_rules! top_level_structured_type {
             U: Into<Option<$structured_type>> {
             let value: Option<$structured_type> = value.into();
             let root = self.root();
-            let existing_element = find_element(root, $element_name, &self.document);
+            let existing_element = root.find(&self.document, $element_name);
             if let Some(value) = value{
                 if let Some(element) = existing_element {
                     value.update_element(element, &mut self.document)?;
                 }
                 let new_element = value.into_element(&mut self.document)?;
-                root.push_child(&mut self.document, new_element.into())?;
+                root.push_child(&mut self.document, new_element)?;
             }else{
                 if let Some(element) = existing_element {
                     element.detach(&mut self.document)?;
@@ -175,7 +175,7 @@ macro_rules! list_item_getter_and_add {
         $(#[$get_docs])*
         pub fn $get(&self) -> Result<Vec<$list_element>, XMLEditorError> {
             let root = self.root();
-            let Some(parent_element) = find_element(root, $parent, &self.document)
+            let Some(parent_element) = root.find(&self.document, $parent)
             else {
                 return Ok(vec![]);
             };
@@ -189,13 +189,13 @@ macro_rules! list_item_getter_and_add {
             value: $list_element,
         ) -> Result<Option<$list_element>, XMLEditorError> {
             let root = self.root();
-            let parent_element = find_element(root, $parent, &self.document);
+            let parent_element = root.find(&self.document, $parent);
             add_or_update_item(&mut self.document, parent_element, root, value)
         }
         $(#[$clear_docs])*
         pub fn  $clear(&mut self)-> Result<(), XMLEditorError> {
             let root = self.root();
-            let parent_element = find_element(root, $parent, &self.document);
+            let parent_element = root.find(&self.document, $parent);
             if let Some(parent_element) = parent_element {
                 parent_element.clear_children(&mut self.document);
             }

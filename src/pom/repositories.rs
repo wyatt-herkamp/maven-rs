@@ -140,7 +140,7 @@ impl ElementConverter for Repository {
             let element = Element::new(document, "releases");
             let release_children = releases.into_children(document)?;
             for child in release_children {
-                element.push_child(document, child.into())?;
+                element.push_child(document, child)?;
             }
             children.push(element);
         }
@@ -148,7 +148,7 @@ impl ElementConverter for Repository {
             let element = Element::new(document, "snapshots");
             let snapshot_children = snapshots.into_children(document)?;
             for child in snapshot_children {
-                element.push_child(document, child.into())?;
+                element.push_child(document, child)?;
             }
             children.push(element);
         }

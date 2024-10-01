@@ -72,7 +72,7 @@ impl<T: ResolvableRepository + Clone> ResolvableRepository for Cow<'_, T> {
 
 impl ResolvableRepository for &str {
     fn base_url(&self) -> &str {
-        *self
+        self
     }
 }
 

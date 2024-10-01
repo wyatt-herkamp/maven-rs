@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     editor::{
-        utils::{
-            add_if_present, create_basic_text_element, find_element, find_element_or_err,
-            sync_element,
-        },
+        utils::{add_if_present, create_basic_text_element, find_element_or_err, sync_element},
         ChildOfListElement, ComparableElement, ElementConverter, HasElementName, PomValue,
         UpdatableElement, XMLEditorError,
     },
@@ -52,12 +49,14 @@ impl ElementConverter for Plugin {
         element: edit_xml::Element,
         document: &edit_xml::Document,
     ) -> Result<Self, XMLEditorError> {
-        let group_id = find_element(element, "groupId", document)
+        let group_id = element
+            .find(document, "groupId")
             .map(|group_id| String::from_element(group_id, document))
             .transpose()?;
         let artifact_id =
             find_element_or_err(element, "artifactId", document)?.text_content(document);
-        let version = find_element(element, "version", document)
+        let version = element
+            .find(document, "version")
             .map(|element| StringOrVariable::from_element(element, document))
             .transpose()?;
 

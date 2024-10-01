@@ -98,7 +98,7 @@ pub trait ElementConverter: Sized {
         let element = Element::new(document, Self::element_name());
         let children = self.into_children(document)?;
         for child in children {
-            element.push_child(document, child.into())?;
+            element.push_child(document, child)?;
         }
         Ok(element)
     }
@@ -127,7 +127,7 @@ pub trait UpdatableElement: ElementConverter {
         element.clear_children(document);
         let children = self.into_children(document)?;
         for child in children {
-            element.push_child(document, child.into())?;
+            element.push_child(document, child)?;
         }
         Ok(())
     }

@@ -1,7 +1,7 @@
 use edit_xml::Element;
 
 use crate::{
-    editor::utils::{add_or_update_item, find_element, get_all_children_of_element},
+    editor::utils::{add_or_update_item, get_all_children_of_element},
     editor::XMLEditorError,
     pom::build::Plugin,
 };
@@ -28,11 +28,11 @@ impl PomEditor {
     }
     pub fn has_build(&self) -> bool {
         let root = self.root();
-        find_element(root, "build", &self.document).is_some()
+        root.find(&self.document, "build").is_some()
     }
     pub fn delete_build(&mut self) -> Result<bool, XMLEditorError> {
         let root = self.root();
-        let element = find_element(root, "build", &self.document);
+        let element = root.find(&self.document, "build");
         if let Some(element) = element {
             element.detach(&mut self.document)?;
             Ok(true)
@@ -60,11 +60,7 @@ macro_rules! top_level_getter_setter {
             element.set_text_content(&mut self.parent.document, value);
         }
         pub fn $get(&self) -> Option<String> {
-            let element = crate::editor::utils::find_element(
-                self.build_element,
-                $name,
-                &self.parent.document,
-            );
+            let element = self.build_element.find(&self.parent.document, $name);
             return element.map(|x| x.text_content(&self.parent.document));
         }
     };
@@ -93,8 +89,7 @@ impl<'a> BuildEditor<'a> {
     }
     /// Gets all the plugins in the build section
     pub fn get_plugins(&self) -> Result<Vec<Plugin>, XMLEditorError> {
-        let Some(plugins) = find_element(self.build_element, "plugins", &self.parent.document)
-        else {
+        let Some(plugins) = self.build_element.find(&self.parent.document, "plugins") else {
             return Ok(vec![]);
         };
         let result = get_all_children_of_element::<Plugin>(&self.parent.document, plugins)?;
@@ -105,7 +100,7 @@ impl<'a> BuildEditor<'a> {
         &mut self,
         plugin: Plugin,
     ) -> Result<Option<Plugin>, XMLEditorError> {
-        let plugins = find_element(self.build_element, "plugins", &self.parent.document);
+        let plugins = self.build_element.find(&self.parent.document, "plugins");
         add_or_update_item(
             &mut self.parent.document,
             plugins,

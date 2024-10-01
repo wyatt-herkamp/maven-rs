@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-quick-xml = { version = "0.36", features = ["serialize", "escape-html"] }
+quick-xml = { version = "0.36", features = ["serialize"] }
 chrono = { version = "0.4", default-features = false, features = [
     "serde",
     "std",
@@ -19,6 +19,7 @@ directories = { version = "5", optional = true }
 thiserror = { version = "1" }
 edit-xml = { git = "https://github.com/wyatt-herkamp/edit-xml.git", features = [
     "ahash",
+    "soft-fail-unescape",
 ] }
 strum = { version = "0.26", features = ["derive"] }
 tracing = "0.1"
