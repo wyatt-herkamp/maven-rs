@@ -10,7 +10,7 @@ use crate::{
         ChildOfListElement, ComparableElement, ElementConverter, HasElementName, PomValue,
         UpdatableElement, XMLEditorError,
     },
-    types::StringOrVariable,
+    types::Property,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, Builder)]
@@ -31,7 +31,7 @@ pub struct Plugin {
     pub group_id: Option<String>,
     #[serde(rename = "artifactId")]
     pub artifact_id: String,
-    pub version: Option<StringOrVariable>,
+    pub version: Option<Property>,
     // TODO Add configuration
 }
 impl Plugin {
@@ -58,7 +58,7 @@ impl ElementConverter for Plugin {
         let artifact_id =
             find_element_or_err(element, "artifactId", document)?.text_content(document);
         let version = find_element(element, "version", document)
-            .map(|element| StringOrVariable::from_element(element, document))
+            .map(|element| Property::from_element(element, document))
             .transpose()?;
 
         Ok(Self {
