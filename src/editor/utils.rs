@@ -8,21 +8,14 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 #[error("Missing Element {0}")]
 pub struct MissingElementError(pub &'static str);
-pub fn find_element(element: Element, name: &'static str, document: &Document) -> Option<Element> {
-    element
-        .child_elements(document)
-        .into_iter()
-        .find(|x| x.name(document) == name)
-}
+
 pub fn find_element_or_err(
     element: Element,
     name: &'static str,
     document: &Document,
 ) -> Result<Element, MissingElementError> {
     element
-        .child_elements(document)
-        .into_iter()
-        .find(|x| x.name(document) == name)
+        .find(document, name)
         .ok_or(MissingElementError(name))
 }
 pub fn find_to_string_or_none(
@@ -31,9 +24,7 @@ pub fn find_to_string_or_none(
     document: &Document,
 ) -> Option<String> {
     element
-        .child_elements(document)
-        .into_iter()
-        .find(|x| x.name(document) == name)
+        .find(document, name)
         .map(|x| x.text_content(document))
 }
 pub fn create_basic_text_element(
@@ -41,9 +32,9 @@ pub fn create_basic_text_element(
     name: impl Into<String>,
     value: impl PomValue,
 ) -> Element {
-    let element = Element::new(document, name);
-    element.set_text_content(document, value.to_string_for_editor());
-    element
+    Element::build(name)
+        .add_text(value.to_string_for_editor())
+        .finish(document)
 }
 
 pub fn get_or_create_top_level_element(
@@ -51,12 +42,12 @@ pub fn get_or_create_top_level_element(
     document: &mut Document,
     parent: Element,
 ) -> Element {
-    if let Some(element) = find_element(parent, name, document) {
+    if let Some(element) = parent.find(document, name) {
         return element;
     }
     let element = Element::new(document, name);
     parent
-        .push_child(document, element.into())
+        .push_child(document, element)
         .expect("Failed to add element");
     element
 }
@@ -74,7 +65,6 @@ pub(crate) fn find_or_create_then_set_text_content(
     value: impl Into<String>,
 ) {
     let element = get_or_create_top_level_element(name, document, parent);
-    element.clear_children(document);
     element.set_text_content(document, value);
 }
 /// Syncs an element with the name of name.
@@ -93,7 +83,7 @@ pub(crate) fn sync_element<V: Into<String>>(
         element.clear_children(document);
         element.set_text_content(document, value);
     } else {
-        let element = find_element(parent, name, document);
+        let element = parent.find(&document, name);
         if let Some(element) = element {
             element.detach(document).expect("Failed to remove element");
         }
@@ -119,11 +109,11 @@ where
         + ComparableElement,
 {
     let Some(parent_container) = parent_element else {
-        // No dependencies element found, create it and add the dependency
+        // No parent element found element found, create it and add the dependency
         let dependencies = Element::new(document, I::parent_element_name());
         let value = item.into_element(document)?;
-        dependencies.push_child(document, value.into())?;
-        insert_into.push_child(document, dependencies.into())?;
+        dependencies.push_child(document, value)?;
+        insert_into.push_child(document, dependencies)?;
         return Ok(None);
     };
     let elements_in_parent = get_all_children_of_element::<I>(document, parent_container)?;
@@ -137,7 +127,7 @@ where
     }
     // No dependency with the same group_id and artifact_id is present
     let value = item.into_element(document)?;
-    parent_container.push_child(document, value.into())?;
+    parent_container.push_child(document, value)?;
     Ok(None)
 }
 /// Gets all children of an element and converts them to a specific type.

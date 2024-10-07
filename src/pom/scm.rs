@@ -55,6 +55,7 @@ impl Scm {
         };
         Ok(Some(url.join(":")))
     }
+    #[allow(clippy::type_complexity)]
     fn split_connection(&self) -> Result<Option<(&str, &str, Vec<&str>)>, SCMError> {
         let Some(url) = self.connection.as_deref() else {
             return Err(SCMError::MissingProvider);

@@ -2,9 +2,9 @@ name: CLI
 
 on:
   push:
-    branches: [main, editor]
+    branches: [main]
   pull_request:
-    branches: [main, editor]
+    branches: [main]
   workflow_dispatch:
 
 env:

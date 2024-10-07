@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use maven_rs::{
-    pom::{editor::PomEditor, Pom},
-    settings::Settings,
-};
+use maven_rs::{pom::editor::PomEditor, settings::Settings};
 use walkdir::{DirEntry, WalkDir};
 
 pub fn main() -> anyhow::Result<()> {

@@ -2,7 +2,7 @@ use edit_xml::Element;
 
 use crate::{
     editor::{
-        utils::{add_or_update_item, find_element, get_all_children_of_element},
+        utils::{add_or_update_item, get_all_children_of_element},
         XMLEditorError,
     },
     pom::Dependency,
@@ -30,26 +30,26 @@ impl PomEditor {
         if self.has_build() {
             return Some(DependencyManagementEditor::new(self));
         }
-        return None;
+        None
     }
     /// Checks if the `dependencyManagement` element is present in the pom file
     ///
     /// If the `dependencyManagement` element is present, it will return true else it will return false
     pub fn has_dependency_management(&self) -> bool {
         let root = self.root();
-        find_element(root, "dependencyManagement", &self.document).is_some()
+        root.find(&self.document, "dependencyManagement").is_some()
     }
     /// Deletes the `dependencyManagement` element from the pom file
     ///
     /// If the `dependencyManagement` element is present, it will delete it and return true else it will return false
     pub fn delete_dependency_management(&mut self) -> Result<bool, XMLEditorError> {
         let root = self.root();
-        let element = find_element(root, "dependencyManagement", &self.document);
+        let element = root.find(&self.document, "dependencyManagement");
         if let Some(element) = element {
             element.detach(&mut self.document)?;
-            return Ok(true);
+            Ok(true)
         } else {
-            return Ok(false);
+            Ok(false)
         }
     }
 }
@@ -72,13 +72,12 @@ impl<'a> DependencyManagementEditor<'a> {
             dependency_management_element: build_element,
         }
     }
-
+    fn dependencies_element(&self) -> Option<Element> {
+        self.dependency_management_element
+            .find(&self.parent.document, "dependencies")
+    }
     pub fn get_dependencies(&self) -> Result<Vec<Dependency>, XMLEditorError> {
-        let Some(dependencies_element) = find_element(
-            self.dependency_management_element,
-            "dependencies",
-            &self.parent.document,
-        ) else {
+        let Some(dependencies_element) = self.dependencies_element() else {
             return Ok(vec![]);
         };
         let result =
@@ -89,11 +88,7 @@ impl<'a> DependencyManagementEditor<'a> {
         &mut self,
         dependency: Dependency,
     ) -> Result<Option<Dependency>, XMLEditorError> {
-        let dependencies_element = find_element(
-            self.dependency_management_element,
-            "dependencies",
-            &self.parent.document,
-        );
+        let dependencies_element = self.dependencies_element();
         add_or_update_item(
             &mut self.parent.document,
             dependencies_element,

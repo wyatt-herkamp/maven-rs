@@ -111,7 +111,7 @@ impl UpdatableElement for Server {
     ) -> Result<(), crate::editor::XMLEditorError> {
         element.clear_children(document);
         for child in self.clone().into_children(document)? {
-            element.push_child(document, child.into())?;
+            element.push_child(document, child)?;
         }
         Ok(())
     }

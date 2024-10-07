@@ -11,10 +11,8 @@ pub struct Settings {
     pub local_repository: Option<PathBuf>,
     pub interactive_mode: Option<bool>,
     pub offline: Option<bool>,
-
     #[serde(default)]
     pub servers: Servers,
-
     #[serde(default)]
     pub mirrors: Mirrors,
 }
@@ -61,7 +59,7 @@ pub mod directories {
             if let Some(local_repository) = &self.local_repository {
                 Some(local_repository.clone())
             } else {
-                get_settings_directory().and_then(|dir| Some(dir.join("repository")))
+                get_settings_directory().map(|dir| dir.join("repository"))
             }
         }
     }
