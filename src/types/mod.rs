@@ -11,9 +11,35 @@ pub(crate) mod prop;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Property {
+    /// A variable
+    /// ```xml
+    /// <version>${project.version}</version>
+    /// ```
     Variable(String),
+    /// An unclosed variable
+    ///
+    /// ```xml
+    /// <version>${project.version</version>
+    /// ```
     UnclosedVariable(String),
+    /// A literal string
+    ///
+    /// ```xml
+    /// <version>1.0.0</version>
+    /// ```
     Literal(String),
+    /// An expression
+    /// ```xml
+    /// <version>${project.version}-${maven.buildNumber}</version>
+    /// ```
+    /// This would be parsed as
+    /// ```no_compile
+    /// let expression = vec![
+    ///     Property::Variable("project.version".to_string()),
+    ///     Property::Literal("-".to_string()),
+    ///     Property::Variable("maven.buildNumber".to_string())
+    /// ];
+    /// ```
     Expression(Vec<Property>),
 }
 impl Default for Property {
@@ -58,7 +84,7 @@ impl<'s> TryFrom<&'s str> for Property {
 
     fn try_from(value: &'s str) -> Result<Self, Self::Error> {
         ParseState::default()
-            .parse(&value)
+            .parse(value)
             .map_err(|e| e.map(|s| s.input))
     }
 }

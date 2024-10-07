@@ -15,17 +15,9 @@ use super::Property;
 
 type Input<'i, 's> = Stateful<&'i str, &'s ParseState>;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ParseState {
     pub allow_unclosed_variable: bool,
-}
-
-impl Default for ParseState {
-    fn default() -> Self {
-        Self {
-            allow_unclosed_variable: false,
-        }
-    }
 }
 
 impl<'s> ParseState {
@@ -35,7 +27,7 @@ impl<'s> ParseState {
     ) -> Result<Property, ParseErrorExt<Input<'i, 's>, ContextError>> {
         parse_expr
             .parse_ext(Input {
-                input: &value,
+                input: value,
                 state: self,
             })
             .map(|mut vec| {
@@ -48,13 +40,13 @@ impl<'s> ParseState {
     }
 }
 
-fn parse_expr<'i, 's>(input: &mut Input<'i, 's>) -> PResult<Vec<Property>> {
+fn parse_expr(input: &mut Input<'_, '_>) -> PResult<Vec<Property>> {
     repeat(0.., parse_part)
         .context(Label("expr"))
         .parse_next(input)
 }
 
-fn parse_part<'i, 's>(input: &mut Input<'i, 's>) -> PResult<Property> {
+fn parse_part(input: &mut Input<'_, '_>) -> PResult<Property> {
     alt((
         parse_var.map(|s| Property::Variable(s.to_string())),
         parse_unclosed_var.map(|s| Property::UnclosedVariable(s.to_string())),
@@ -64,38 +56,38 @@ fn parse_part<'i, 's>(input: &mut Input<'i, 's>) -> PResult<Property> {
     .parse_next(input)
 }
 
-fn parse_var<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_var<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     delimited(parse_var_prefix, parse_var_value, parse_var_suffix)
         .context(Label("var"))
         .parse_next(input)
 }
 
-fn parse_unclosed_var<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_unclosed_var<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     preceded(parse_var_prefix, parse_rest)
         .context(Label("unclosed_var"))
         .parse_next(input)
 }
 
-fn parse_literal<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_literal<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     preceded(not(eof), parse_rest)
         .context(Label("literal"))
         .parse_next(input)
 }
 
-fn parse_rest<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_rest<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     alt((take_until(0.., '$'), rest))
         .context(Label("rest"))
         .parse_next(input)
 }
 
-fn parse_var_prefix<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_var_prefix<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     literal("${")
         .context(Expected("${".into()))
         .context(Label("var_prefix"))
         .parse_next(input)
 }
 
-fn parse_var_value<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_var_value<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     take_while(0.., |c: char| {
         c.is_space() || c.is_alphanumeric() || c == '.'
     })
@@ -103,7 +95,7 @@ fn parse_var_value<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
     .parse_next(input)
 }
 
-fn parse_var_suffix<'i, 's>(input: &mut Input<'i, 's>) -> PResult<&'i str> {
+fn parse_var_suffix<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     literal('}')
         .context(Expected('}'.into()))
         .context(Label("var_suffix"))

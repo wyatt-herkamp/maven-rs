@@ -43,7 +43,7 @@ impl<P, I, O, E> ParserExt<I, O, E> for P where P: Parser<I, O, E> {}
 pub struct ParseErrorExt<I, E> {
     /// The [`Stream`] at the initial location when parsing started.
     pub input: I,
-    
+
     /// The location in [`ParseErrorExt::input`] where parsing failed.
     ///
     /// **Note:** This is an offset, not an index, and may point to the end of input

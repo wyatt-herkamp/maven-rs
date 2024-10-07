@@ -83,7 +83,7 @@ pub(crate) fn sync_element<V: Into<String>>(
         element.clear_children(document);
         element.set_text_content(document, value);
     } else {
-        let element = parent.find(&document, name);
+        let element = parent.find(document, name);
         if let Some(element) = element {
             element.detach(document).expect("Failed to remove element");
         }

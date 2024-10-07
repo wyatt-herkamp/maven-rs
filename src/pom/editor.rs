@@ -35,22 +35,21 @@ pub struct PomEditor {
 }
 impl Default for PomEditor {
     fn default() -> Self {
-        let mut document = Document::new();
-        let container = document.container();
-        Element::build("project")
-            .attribute("xmlns", "http://maven.apache.org/POM/4.0.0")
-            .attribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-            .attribute(
-                "xsi:schemaLocation",
-                "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd",
-            )
-            .push_to(&mut document, container);
+        let document = Document::new_with_root("project", |project| {
+            project
+                .attribute("xmlns", "http://maven.apache.org/POM/4.0.0")
+                .attribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+                .attribute(
+                    "xsi:schemaLocation",
+                    "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd",
+                )
+        });
         let mut editor = Self {
             document,
             ident_level: 2,
         };
 
-        editor.set_name("4.0.0");
+        editor.set_model_version("4.0.0");
         editor
     }
 }
@@ -575,7 +574,6 @@ mod tests {
             id: Some("central".to_string()),
             name: Some("Maven Central Repository".to_string()),
             url: "https://repo.maven.apache.org/maven2".to_string(),
-            layout: None,
             ..Default::default()
         };
         editor.add_or_update_repository(repository.clone())?;
