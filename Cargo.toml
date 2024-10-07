@@ -11,6 +11,8 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 quick-xml = { version = "0.36", features = ["serialize"] }
+winnow = { version = "0.6" }
+
 chrono = { version = "0.4", default-features = false, features = [
     "serde",
     "std",
@@ -29,6 +31,7 @@ reqwest = { version = "0.12", features = ["stream"], optional = true }
 url = { version = "2", optional = true }
 bytes = { version = "1", optional = true }
 base64 = { version = "0.22", optional = true }
+
 [features]
 default = ["local"]
 local = ["directories"]

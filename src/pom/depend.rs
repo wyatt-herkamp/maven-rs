@@ -10,7 +10,7 @@ use crate::{
         ChildOfListElement, ComparableElement, ElementConverter, HasElementName, UpdatableElement,
         XMLEditorError,
     },
-    types::StringOrVariable,
+    types::Property,
     utils::group_id_and_artifact_id_and_version_to_path,
 };
 use derive_builder::Builder;
@@ -54,7 +54,7 @@ pub struct Dependency {
     /// <version>1.0.0</version>
     /// ```
     #[builder(default, setter(into, strip_option))]
-    pub version: Option<StringOrVariable>,
+    pub version: Option<Property>,
     /// The type of the dependency.
     /// ```xml
     /// <type>jar</type>
@@ -142,7 +142,7 @@ impl TryFrom<&str> for Dependency {
             .get(2)
             .ok_or(DependencyParseError::MissingVersion)?
             .to_string();
-        let version = StringOrVariable::String(version);
+        let version = Property::Literal(version);
         // TODO: Add support for type, scope, and classifier.
 
         let result = Dependency {
@@ -189,7 +189,7 @@ impl ElementConverter for Dependency {
         document,
         "groupId"(String) => group_id,
         "artifactId"(String) => artifact_id,
-        "version"(StringOrVariable) => version,
+        "version"(Property) => version,
         "type"(String) => depend_type,
         "scope"(String) => scope,
         "classifier"(String) => classifier

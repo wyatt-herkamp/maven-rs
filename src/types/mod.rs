@@ -1,89 +1,94 @@
 use std::{fmt::Display, str::FromStr};
 
-use thiserror::Error;
+use prop::ParseState;
 
 use crate::{
     editor::{InvalidValueError, PomValue},
-    utils::serde_utils::serde_via_string_types,
+    utils::{parse::ParseErrorExt, serde_utils::serde_via_string_types},
 };
 
-#[derive(Debug, Clone, Error)]
-pub enum InvalidMavenVariable {
-    #[error("The Maven variable is missing a closing bracket")]
-    MissingClosingBracket,
-}
+pub(crate) mod prop;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum StringOrVariable {
+pub enum Property {
     Variable(String),
-    String(String),
+    UnclosedVariable(String),
+    Literal(String),
+    Expression(Vec<Property>),
 }
-impl Default for StringOrVariable {
+impl Default for Property {
     fn default() -> Self {
-        StringOrVariable::String(Default::default())
+        Property::Literal(Default::default())
     }
 }
-impl StringOrVariable {
+impl Property {
     pub fn is_variable(&self) -> bool {
-        matches!(self, StringOrVariable::Variable(_))
+        matches!(self, Property::Variable(_))
     }
     pub fn is_maven_variable(&self) -> bool {
-        let StringOrVariable::Variable(name) = self else {
+        let Property::Variable(name) = self else {
             return false;
         };
         name.starts_with("maven.")
     }
     pub fn is_project_variable(&self) -> bool {
-        let StringOrVariable::Variable(name) = self else {
+        let Property::Variable(name) = self else {
             return false;
         };
         name.starts_with("project.")
     }
 }
 
-impl TryFrom<String> for StringOrVariable {
-    type Error = InvalidMavenVariable;
+impl TryFrom<String> for Property {
+    type Error = ParseErrorExt<String, winnow::error::ContextError>;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value.starts_with("${") {
-            if !value.ends_with("}") {
-                return Err(InvalidMavenVariable::MissingClosingBracket);
+        match ParseState::default().parse(&value) {
+            Ok(o) => Ok(o),
+            Err(e) => {
+                let offset = e.offset;
+                let inner = e.inner;
+                Err(ParseErrorExt::new(value, offset, inner))
             }
-            let variable_name = value[2..value.len() - 1].to_string();
-            Ok(StringOrVariable::Variable(variable_name))
-        } else {
-            Ok(StringOrVariable::String(value))
         }
     }
 }
-impl TryFrom<&str> for StringOrVariable {
-    type Error = InvalidMavenVariable;
+impl<'s> TryFrom<&'s str> for Property {
+    type Error = ParseErrorExt<&'s str, winnow::error::ContextError>;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::try_from(value.to_string())
+    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
+        ParseState::default()
+            .parse(&value)
+            .map_err(|e| e.map(|s| s.input))
     }
 }
-impl FromStr for StringOrVariable {
-    type Err = InvalidMavenVariable;
+impl FromStr for Property {
+    type Err = ParseErrorExt<(), winnow::error::ContextError>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::try_from(s.to_string())
+        ParseState::default().parse(s).map_err(|e| e.map(|_| ()))
     }
 }
-impl Display for StringOrVariable {
+impl Display for Property {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            StringOrVariable::Variable(name) => write!(f, "${{{}}}", name),
-            StringOrVariable::String(value) => write!(f, "{}", value),
+            Property::Variable(name) => write!(f, "${{{}}}", name),
+            Property::UnclosedVariable(value) => write!(f, "${{{}", value),
+            Property::Literal(value) => write!(f, "{}", value),
+            Property::Expression(vec) => {
+                for part in vec {
+                    part.fmt(f)?;
+                }
+                Ok(())
+            }
         }
     }
 }
-impl PomValue for StringOrVariable {
+impl PomValue for Property {
     fn from_str_for_editor(value: &str) -> Result<Self, crate::editor::InvalidValueError> {
-        let value =
-            Self::from_str(value).map_err(|err| InvalidValueError::InvalidFormattedValue {
-                error: err.to_string(),
-            })?;
-        Ok(value)
+        Self::from_str(value).map_err(|err| InvalidValueError::InvalidFormattedValue {
+            error: err.to_string(),
+        })
     }
 
     fn to_string_for_editor(&self) -> String {
@@ -91,25 +96,31 @@ impl PomValue for StringOrVariable {
     }
 }
 
-serde_via_string_types!(StringOrVariable);
+serde_via_string_types!(Property);
 
 #[cfg(test)]
 mod tests {
-    use crate::types::StringOrVariable;
+    use crate::types::Property;
     #[test]
     fn test_regular_string_parse() {
-        let value = StringOrVariable::try_from("test").unwrap();
-        assert_eq!(value, StringOrVariable::String("test".to_string()));
+        let value = Property::try_from("test").unwrap();
+        assert_eq!(value, Property::Literal("test".to_string()));
     }
     #[test]
     fn test_variable_parse() {
-        let value = "${test}".parse::<StringOrVariable>().unwrap();
-        assert_eq!(value, StringOrVariable::Variable("test".to_string()));
+        let value = "${test}".parse::<Property>().unwrap();
+        assert_eq!(value, Property::Variable("test".to_string()));
     }
 
     #[test]
     fn test_maven_variable() {
-        let value: StringOrVariable = "${maven.version}".parse::<StringOrVariable>().unwrap();
+        let value = "${maven.version}".parse::<Property>().unwrap();
         assert!(value.is_maven_variable());
+    }
+
+    #[test]
+    fn test_unclosed_var() {
+        let result = "${var".parse::<Property>();
+        assert!(result.is_err())
     }
 }
