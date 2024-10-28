@@ -219,7 +219,6 @@ impl ElementConverter for Dependency {
 
 #[cfg(test)]
 mod tests {
-    use std::{fmt::Display, path::PathBuf};
 
     use pretty_assertions::assert_eq;
 
