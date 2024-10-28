@@ -143,7 +143,11 @@ mod tests {
         let value = "${maven.version}".parse::<Property>().unwrap();
         assert!(value.is_maven_variable());
     }
-
+    #[test]
+    fn test_commons_logging() {
+        let value = "${commons-logging.version}".parse::<Property>().unwrap();
+        assert!(!value.is_maven_variable());
+    }
     #[test]
     fn test_unclosed_var() {
         let result = "${var".parse::<Property>();

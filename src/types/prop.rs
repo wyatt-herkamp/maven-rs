@@ -89,7 +89,7 @@ fn parse_var_prefix<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
 
 fn parse_var_value<'i>(input: &mut Input<'i, '_>) -> PResult<&'i str> {
     take_while(0.., |c: char| {
-        c.is_space() || c.is_alphanumeric() || c == '.'
+        c.is_space() || c.is_alphanumeric() || c == '.' || c == '-'
     })
     .context(Label("var_value"))
     .parse_next(input)

@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-quick-xml = { version = "0.36", features = ["serialize"] }
+quick-xml = { version = "0.37", features = ["serialize"] }
 winnow = { version = "0.6" }
 
 chrono = { version = "0.4", default-features = false, features = [
@@ -36,12 +36,13 @@ base64 = { version = "0.22", optional = true }
 default = ["local"]
 local = ["directories"]
 resolver = ["reqwest", "url", "bytes", "base64"]
-
+bug-files = []
 [dev-dependencies]
 anyhow = { version = "1" }
 pretty_assertions = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 walkdir = { version = "2" }
+toml = { version = "0.8" }
 
 [[example]]
 name = "check_against_local_repo"

@@ -10,9 +10,11 @@ pub fn main() -> anyhow::Result<()> {
             .get_local_repository_or_default()
             .expect("No Local Repository Found"),
     };
+    let mut files_tested = 0;
     for entry in WalkDir::new(walk_location) {
         let entry = entry?;
         if is_pom_file(&entry)? {
+            files_tested += 1;
             println!("Attempting to Parse Pom File at {:?}", entry.path());
             let file_as_string = std::fs::read_to_string(entry.path())?;
 
@@ -42,6 +44,7 @@ pub fn main() -> anyhow::Result<()> {
             println!("SCM Element: {:#?}", editor_read.get_scm()?);
         }
     }
+    println!("Files Tested: {}", files_tested);
     Ok(())
 }
 

@@ -219,9 +219,14 @@ impl ElementConverter for Dependency {
 
 #[cfg(test)]
 mod tests {
+    use std::{fmt::Display, path::PathBuf};
+
     use pretty_assertions::assert_eq;
 
-    use crate::editor::utils::test_utils;
+    use crate::{
+        editor::utils::test_utils,
+        utils::bug_testing::{self, BugFile},
+    };
 
     pub use super::*;
     #[test]
@@ -337,6 +342,29 @@ mod tests {
                 ..Default::default()
             },
         )?;
+        Ok(())
+    }
+
+    #[test]
+    pub fn test_found_bugs() -> anyhow::Result<()> {
+        let depend_bugs_dir = bug_testing::get_bugs_path().join("depends");
+        let depend_bugs = depend_bugs_dir.read_dir()?;
+        for bug in depend_bugs {
+            let bug = bug?;
+            let bug_path = bug.path();
+            let bug_file = std::fs::read_to_string(&bug_path)?;
+            let bug: BugFile = toml::de::from_str(&bug_file)?;
+            if !bug.depends.is_empty() {
+                println!("Bug File: \n {}", bug.source);
+                println!("Error: {}", bug.error);
+                for found_bug in bug.depends {
+                    println!("Testing Dependency: {:?}", found_bug.expected);
+                    let expected_depends: Dependency = found_bug.expected.into();
+                    println!("Expected Dependency: {}", expected_depends);
+                    test_parse_methods(&found_bug.xml, expected_depends.clone())?;
+                }
+            }
+        }
         Ok(())
     }
 }
