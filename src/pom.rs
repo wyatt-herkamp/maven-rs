@@ -1,3 +1,23 @@
+//! This module contains the structure of a pom file for serde deserialization.
+//!
+//! ```
+//! use maven_rs::pom::Pom;
+//! const EXAMPLE_POM: &str = r#"
+//!    <?xml version="1.0" encoding="UTF-8"?>
+//!   <project xmlns="http://maven.apache.org/POM/4.0.0"
+//!      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+//!      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+//!         <modelVersion>4.0.0</modelVersion>
+//!         <groupId>org.apache.maven</groupId>
+//!         <artifactId>maven-artifact</artifactId>
+//!         <version>3.0</version>
+//!         <name>Apache Maven Artifact</name>
+//! </project>
+//! "#;
+//!
+//! let x: Pom = maven_rs::quick_xml::de::from_str(EXAMPLE_POM).unwrap();
+//! println!("{:#?}", x);
+//! ```
 use serde::{Deserialize, Serialize};
 mod build;
 mod depend;

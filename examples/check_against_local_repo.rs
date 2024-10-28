@@ -1,3 +1,6 @@
+//! This example will walk through the local repository and attempt to parse all the pom files it finds.
+//!
+//! I personally run this example after making changes to the library to ensure that the changes do not break the parsing of any pom files.
 use std::path::PathBuf;
 
 use maven_rs::{pom::editor::PomEditor, settings::Settings};
