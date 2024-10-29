@@ -22,7 +22,6 @@ pub enum Error {
     XMLDeserialize(#[from] quick_xml::de::DeError),
     #[error("Invalid File Extension found")]
     InvalidFileExtension,
+    #[error("No Home Directory Found")]
+    NoHomeDirectory,
 }
-
-#[cfg(test)]
-const MANIFEST: &str = env!("CARGO_MANIFEST_DIR");

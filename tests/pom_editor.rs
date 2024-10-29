@@ -7,6 +7,7 @@ pub fn test_read_test_pom() -> anyhow::Result<()> {
     let file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("data")
+        .join("test_poms")
         .join("test-pom.xml");
     let reader = std::fs::File::open(file_path)?;
     let mut editor = PomEditor::load_from_reader(reader)?;

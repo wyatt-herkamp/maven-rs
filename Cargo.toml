@@ -9,24 +9,27 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
+## Parsing Libraries
 quick-xml = { version = "0.37", features = ["serialize"] }
 winnow = { version = "0.6" }
-
-chrono = { version = "0.4", default-features = false, features = [
-    "serde",
-    "std",
-] }
-directories = { version = "5", optional = true }
-thiserror = { version = "1" }
 edit-xml = { git = "https://github.com/wyatt-herkamp/edit-xml.git", features = [
     "ahash",
     "soft-fail-unescape",
+    "tracing",
 ] }
-strum = { version = "0.26", features = ["derive"] }
-tracing = "0.1"
+## Serde for serialization and deserialization
+serde = { version = "1.0", features = ["derive"] }
+## Macro Utilities
+thiserror = { version = "1" }
 derive_builder = "0.20"
+strum = { version = "0.26", features = ["derive"] }
+## Other Libs
+chrono = { version = "0.4", features = ["serde"] }
+dirs = { version = "5", optional = true }
 ahash = "0.8"
+tracing = "0.1"
+
+## Used for making HTTP requests to Maven repositories
 reqwest = { version = "0.12", features = ["stream"], optional = true }
 url = { version = "2", optional = true }
 bytes = { version = "1", optional = true }
@@ -34,8 +37,9 @@ base64 = { version = "0.22", optional = true }
 
 [features]
 default = ["local"]
-local = ["directories"]
+local = ["dirs"]
 resolver = ["reqwest", "url", "bytes", "base64"]
+## This feature is mainly for debugging purposes
 bug-files = []
 [dev-dependencies]
 anyhow = { version = "1" }

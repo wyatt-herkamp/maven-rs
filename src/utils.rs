@@ -9,7 +9,7 @@ pub fn group_id_to_path(group_id: &str) -> String {
 pub fn group_id_and_artifact_id_to_path(group_id: &str, artifact_id: &str) -> String {
     format!("{}/{}", group_id_to_path(group_id), artifact_id)
 }
-
+/// Concatenates the group_id, artifact_id, and version to create a path
 pub fn group_id_and_artifact_id_and_version_to_path(
     group_id: &str,
     artifact_id: &str,

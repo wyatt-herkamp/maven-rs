@@ -1,5 +1,8 @@
 macro_rules! define_time_format {
-    ($time:ident,$format:literal) => {
+    (   $(#[$docs:meta])*
+        $time:ident($format:literal)
+    ) => {
+        $(#[$docs])*
         pub mod $time {
             use chrono::NaiveDateTime;
             use serde::{Deserialize, Deserializer, Serializer};
@@ -35,5 +38,15 @@ macro_rules! define_time_format {
         }
     };
 }
-define_time_format!(standard_time, "%Y%m%d%H%M%S");
-define_time_format!(snapshot_time, "%Y%m%d.%H%M%S");
+define_time_format!(
+    /// Standard time format
+    ///
+    /// Format: `%Y%m%d%H%M%S`
+    standard_time("%Y%m%d%H%M%S")
+);
+define_time_format!(
+    /// Snapshot time format
+    ///
+    /// Format: `%Y%m%d.%H%M%S`
+    snapshot_time("%Y%m%d.%H%M%S")
+);

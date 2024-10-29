@@ -1,23 +1,4 @@
-//! This module contains the structure of a pom file for serde deserialization.
-//!
-//! ```
-//! use maven_rs::pom::Pom;
-//! const EXAMPLE_POM: &str = r#"
-//!    <?xml version="1.0" encoding="UTF-8"?>
-//!   <project xmlns="http://maven.apache.org/POM/4.0.0"
-//!      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-//!      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-//!         <modelVersion>4.0.0</modelVersion>
-//!         <groupId>org.apache.maven</groupId>
-//!         <artifactId>maven-artifact</artifactId>
-//!         <version>3.0</version>
-//!         <name>Apache Maven Artifact</name>
-//! </project>
-//! "#;
-//!
-//! let x: Pom = maven_rs::quick_xml::de::from_str(EXAMPLE_POM).unwrap();
-//! println!("{:#?}", x);
-//! ```
+//! The structure and functions to work with a pom file.
 use serde::{Deserialize, Serialize};
 mod build;
 mod depend;
@@ -34,6 +15,31 @@ pub use parent::*;
 pub use properties::*;
 pub use repositories::*;
 pub use scm::*;
+
+/// Represents a pom file.
+///
+/// This structure is used with Serde to deserialize a pom file.
+///
+/// # Example
+/// ```
+/// use maven_rs::pom::Pom;
+/// const EXAMPLE_POM: &str = r#"
+///    <?xml version="1.0" encoding="UTF-8"?>
+///    <project>
+///         <modelVersion>4.0.0</modelVersion>
+///         <groupId>org.apache.maven</groupId>
+///         <artifactId>maven-artifact</artifactId>
+///         <version>3.0</version>
+///         <name>Apache Maven Artifact</name>
+///    </project>
+/// "#;
+///
+/// let x: Pom = maven_rs::quick_xml::de::from_str(EXAMPLE_POM).unwrap();
+/// println!("{:#?}", x);
+/// assert_eq!(x.group_id, Some("org.apache.maven".to_string()));
+/// assert_eq!(x.artifact_id, "maven-artifact".to_string());
+/// assert_eq!(x.version, Some("3.0".to_string()));
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Pom {
     #[serde(rename = "groupId")]
@@ -65,35 +71,30 @@ impl Pom {
 
 #[cfg(test)]
 pub mod tests {
+    use anyhow::Context;
+
     use crate::pom::Pom;
-    use crate::MANIFEST;
-    use std::io::BufReader;
-    use std::path::PathBuf;
 
     #[test]
-    pub fn test_read_local_config() {
-        let buf = PathBuf::from(MANIFEST)
-            .join("tests")
-            .join("data")
-            .join("test-pom.xml");
-        if !buf.exists() {
-            panic!("Test file not found");
-        }
-        let file = std::fs::File::open(buf).unwrap();
-        let x: Pom = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
-        println!("{:#?}", x);
-    }
-    #[test]
-    pub fn read_gson_pom() {
-        let buf = PathBuf::from(MANIFEST)
-            .join("tests")
-            .join("data")
-            .join("gson-2.11.0.pom");
-        if !buf.exists() {
-            panic!("Test file not found");
-        }
-        let file = std::fs::File::open(buf).unwrap();
-        let x: Pom = quick_xml::de::from_reader(BufReader::new(file)).unwrap();
-        println!("{:#?}", x);
+    pub fn test_version_or_group_id_in_parent() -> anyhow::Result<()> {
+        const EXAMPLE_POM: &str = r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project>
+            <modelVersion>4.0.0</modelVersion>
+            <parent>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson-parent</artifactId>
+                <version>2.11.0</version>
+            </parent>
+
+            <artifactId>gson</artifactId>
+            <name>Gson</name>
+        </project>
+        "#;
+        let pom: Pom = quick_xml::de::from_str(EXAMPLE_POM).context("Unable to Parse Test Pom")?;
+        assert_eq!(pom.get_group_id(), Some("com.google.code.gson"));
+        assert_eq!(pom.get_version(), Some("2.11.0"));
+        assert_eq!(pom.artifact_id, "gson");
+        Ok(())
     }
 }

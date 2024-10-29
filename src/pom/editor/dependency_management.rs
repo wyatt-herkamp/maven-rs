@@ -128,8 +128,8 @@ mod tests {
 
     #[test]
     fn test_read_lwjgl_bom() -> anyhow::Result<()> {
-        let xml_path =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/lwjgl-bom-3.3.4.pom");
+        let xml_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/test_poms/lwjgl-bom-3.3.4.pom");
         let file = std::fs::read_to_string(xml_path)?;
         let mut editor = PomEditor::load_from_str(&file)?;
         assert!(
@@ -146,8 +146,8 @@ mod tests {
 
     #[test]
     fn delete_dependency_management() -> anyhow::Result<()> {
-        let xml_path =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/lwjgl-bom-3.3.4.pom");
+        let xml_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/test_poms/lwjgl-bom-3.3.4.pom");
         let file = std::fs::read_to_string(xml_path)?;
         let mut editor = PomEditor::load_from_str(&file)?;
         assert!(

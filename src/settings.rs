@@ -5,6 +5,9 @@ mod mirrors;
 mod servers;
 pub use mirrors::*;
 pub use servers::*;
+
+pub static MAVEN_FOLDER: &str = ".m2";
+pub static SETTINGS_FILE: &str = "settings.xml";
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
@@ -23,33 +26,39 @@ impl Settings {
 }
 #[cfg(feature = "local")]
 pub mod directories {
-    use super::Settings;
+    use super::{Settings, MAVEN_FOLDER, SETTINGS_FILE};
     use crate::Error;
     use std::io::BufReader;
     use std::path::PathBuf;
 
     /// Returns the path to the .m2 folder
+    ///
+    /// If the home directory is not found, None is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use maven_rs::settings::directories::get_settings_directory;
+    /// let path = get_settings_directory();
+    /// println!("{:?}", path);
+    /// ``````
     pub fn get_settings_directory() -> Option<PathBuf> {
-        directories::BaseDirs::new().map(|dirs| dirs.home_dir().join(".m2"))
+        dirs::home_dir().map(|dirs| dirs.join(MAVEN_FOLDER))
     }
 
     /// Returns returns the path to the settings file.
     pub fn get_settings_path() -> Option<PathBuf> {
-        get_settings_directory().map(|dir| dir.join("settings.xml"))
+        get_settings_directory().map(|dir| dir.join(SETTINGS_FILE))
     }
 
     impl Settings {
         /// Attempts to read the local configuration file.
         pub fn read_local_config() -> Result<Settings, Error> {
-            let result = get_settings_path().ok_or(Error::Io(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "System User Path Not Found",
-            )))?;
+            let result = get_settings_path().ok_or(Error::NoHomeDirectory)?;
             if !result.exists() {
                 return Ok(Settings::default());
             }
             let file = std::fs::File::open(result)?;
-
             quick_xml::de::from_reader(BufReader::new(file)).map_err(Error::from)
         }
         /// Returns the local repository or the default repository.
