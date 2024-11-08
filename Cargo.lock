@@ -255,13 +255,13 @@ dependencies = [
 [[package]]
 name = "edit-xml"
 version = "0.1.0"
-source = "git+https://github.com/wyatt-herkamp/edit-xml.git#89019dcdf364514c2973e25882ffb5bb0abc7549"
+source = "git+https://github.com/wyatt-herkamp/edit-xml.git#f2eb83019aecd1fe2026c1dc9fb83135676c2d03"
 dependencies = [
  "ahash",
  "encoding_rs",
  "memchr",
  "quick-xml",
- "thiserror 1.0.68",
+ "thiserror 2.0.0",
  "tracing",
 ]
 
