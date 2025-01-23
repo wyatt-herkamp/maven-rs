@@ -78,6 +78,7 @@ macro_rules! top_level_structured_type {
             if let Some(value) = value{
                 if let Some(element) = existing_element {
                     value.update_element(element, &mut self.parent.document)?;
+                    return Ok(());
                 }
                 let new_element = value.into_element(&mut self.parent.document)?;
                 root.push_child(&mut self.parent.document, new_element)?;
@@ -129,6 +130,17 @@ mod tests {
 
             let repository = distribution_management.get_snapshot_repository()?;
             assert!(repository.is_none());
+
+            distribution_management.set_repository(Some(
+                distribution_management::DistributionRepository {
+                    id: Some("test".to_string()),
+                    name: Some("test".to_string()),
+                    url: "https://test.com".to_string(),
+                    layout: Some("default".to_string()),
+                    ..Default::default()
+                }
+                .repository(),
+            ))?;
 
             distribution_management.set_repository(Some(
                 distribution_management::DistributionRepository {

@@ -148,6 +148,7 @@ macro_rules! top_level_structured_type {
             if let Some(value) = value{
                 if let Some(element) = existing_element {
                     value.update_element(element, &mut self.document)?;
+                    return Ok(());
                 }
                 let new_element = value.into_element(&mut self.document)?;
                 root.push_child(&mut self.document, new_element)?;
