@@ -15,6 +15,7 @@ use std::io::Write;
 use edit_xml::{Document, Element, ReadOptions, WriteOptions};
 mod build;
 mod dependency_management;
+mod distribution_management;
 use super::{depend::Dependency, Developer, Parent, Repository, Scm};
 use crate::editor::{
     utils::{add_or_update_item, get_all_children_of_element, MissingElementError},
@@ -22,7 +23,7 @@ use crate::editor::{
 };
 pub use build::*;
 pub use dependency_management::*;
-
+pub use distribution_management::*;
 /// A struct that allows editing and creating pom files
 /// A pom file is an xml file that follows the maven pom schema
 #[derive(Debug)]

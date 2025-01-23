@@ -11,8 +11,9 @@ use utils::MissingElementError;
 
 use crate::{
     pom::{
-        DependencyBuilderError, DeveloperBuilderError, ParentBuilderError, PluginBuilderError,
-        RepositoryBuilderError, ScmBuilderError, SubRepositoryRulesBuilderError,
+        DependencyBuilderError, DeveloperBuilderError, DistributionRepositoryBuilderError,
+        ParentBuilderError, PluginBuilderError, RepositoryBuilderError, ScmBuilderError,
+        SubRepositoryRulesBuilderError,
     },
     settings::{MirrorBuilderError, ServerBuilderError},
 };
@@ -74,7 +75,8 @@ builder_err![
     (SubRepositoryRulesBuilderError, "SubRepositoryRules"),
     (RepositoryBuilderError, "Repository"),
     (ScmBuilderError, "Scm"),
-    (DeveloperBuilderError, "Developer")
+    (DeveloperBuilderError, "Developer"),
+    (DistributionRepositoryBuilderError, "DistributionRepository")
 ];
 
 /// An element with a specific name.
