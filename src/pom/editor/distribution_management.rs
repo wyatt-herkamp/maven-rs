@@ -2,14 +2,8 @@ use edit_xml::Element;
 
 use super::PomEditor;
 use crate::editor::ElementConverter;
+use crate::editor::{UpdatableElement, XMLEditorError};
 use crate::pom::{DistributionRepositoryRepository, DistributionRepositorySnapshotRepository};
-use crate::{
-    editor::{
-        utils::{add_or_update_item, get_all_children_of_element},
-        UpdatableElement, XMLEditorError,
-    },
-    pom::{build::Plugin, DistributionRepository},
-};
 impl PomEditor {
     /// Creates a new build editor
     ///
@@ -20,7 +14,7 @@ impl PomEditor {
     pub fn get_or_create_distribution_management_element(
         &mut self,
     ) -> DistributionManagementEditor<'_> {
-        return DistributionManagementEditor::new(self);
+        DistributionManagementEditor::new(self)
     }
     /// Checks if the build element is present in the pom file
     ///
@@ -35,11 +29,12 @@ impl PomEditor {
     }
     pub fn has_distribution_management(&self) -> bool {
         let root = self.root();
-        root.find(&self.document, "build").is_some()
+        root.find(&self.document, "distributionManagement")
+            .is_some()
     }
     pub fn delete_distribution_management(&mut self) -> Result<bool, XMLEditorError> {
         let root = self.root();
-        let element = root.find(&self.document, "build");
+        let element = root.find(&self.document, "distributionManagement");
         if let Some(element) = element {
             element.detach(&mut self.document)?;
             Ok(true)
@@ -48,7 +43,7 @@ impl PomEditor {
         }
     }
 }
-/// Allows for editing the build section of a pom file
+/// Allows for editing the [Distribution Management](https://maven.apache.org/pom.html#Distribution_Management) section of a pom file
 #[derive(Debug)]
 pub struct DistributionManagementEditor<'a> {
     parent: &'a mut PomEditor,
@@ -96,7 +91,7 @@ macro_rules! top_level_structured_type {
 impl<'a> DistributionManagementEditor<'a> {
     pub(super) fn new(parent: &'a mut PomEditor) -> Self {
         let root = parent.root();
-        let element = crate::editor::utils::get_or_create_top_level_element(
+        let element: Element = crate::editor::utils::get_or_create_top_level_element(
             "distributionManagement",
             &mut parent.document,
             root,

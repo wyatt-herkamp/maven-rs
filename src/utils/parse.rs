@@ -1,4 +1,7 @@
-use std::{any::type_name, fmt::Display};
+use std::{
+    any::type_name,
+    fmt::{Debug, Display},
+};
 
 use winnow::{
     combinator::eof,
@@ -87,3 +90,5 @@ impl<I, E: Display> Display for ParseErrorExt<I, E> {
         )
     }
 }
+
+impl<I, E: std::error::Error> std::error::Error for ParseErrorExt<I, E> where I: Debug {}

@@ -15,7 +15,7 @@ impl PomEditor {
     /// This function will hold a mutable reference to the PomEditor.
     /// I would recommend using this function within a scope. To prevent borrowing issues.
     pub fn get_or_create_build_element(&mut self) -> BuildEditor<'_> {
-        return BuildEditor::new(self);
+        BuildEditor::new(self)
     }
     /// Checks if the build element is present in the pom file
     ///

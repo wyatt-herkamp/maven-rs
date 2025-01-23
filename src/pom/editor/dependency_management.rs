@@ -19,7 +19,7 @@ impl PomEditor {
     pub fn get_or_create_dependency_management_element(
         &mut self,
     ) -> DependencyManagementEditor<'_> {
-        return DependencyManagementEditor::new(self);
+        DependencyManagementEditor::new(self)
     }
     /// Checks if the `dependencyManagement` element is present in the pom file
     ///

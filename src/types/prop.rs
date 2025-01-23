@@ -1,11 +1,11 @@
 use winnow::{
-    combinator::{alt, delimited, eof, not, preceded, repeat, rest},
+    combinator::{alt, delimited, eof, not, preceded, repeat},
     error::{
         ContextError,
         StrContext::{Expected, Label},
     },
     stream::AsChar,
-    token::{literal, take_until, take_while},
+    token::{literal, rest, take_until, take_while},
     PResult, Parser, Stateful,
 };
 
