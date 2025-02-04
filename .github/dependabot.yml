@@ -17,3 +17,7 @@ updates:
         update-types:
           - "patch"
           - "minor"
+    ignore:
+      - dependency-name: "winnow"
+        update-types: ["minor", "major"]
+
