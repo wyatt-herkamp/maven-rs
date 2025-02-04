@@ -115,7 +115,7 @@ mod tests {
     use crate::pom::{distribution_management, editor::PomEditor};
 
     #[test]
-    pub fn test_plugins() -> anyhow::Result<()> {
+    pub fn test_dm() -> anyhow::Result<()> {
         let mut editor = PomEditor::new_with_group_and_artifact("dev.wyatt-herkamp", "test");
         {
             let mut distribution_management =

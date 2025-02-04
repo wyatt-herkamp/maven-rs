@@ -91,4 +91,11 @@ impl<I, E: Display> Display for ParseErrorExt<I, E> {
     }
 }
 
-impl<I, E: std::error::Error> std::error::Error for ParseErrorExt<I, E> where I: Debug {}
+impl<I, E: std::error::Error> std::error::Error for ParseErrorExt<I, E>
+where
+    I: Debug,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.inner.source()
+    }
+}

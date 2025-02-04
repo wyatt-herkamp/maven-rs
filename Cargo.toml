@@ -25,7 +25,7 @@ derive_builder = "0.20"
 strum = { version = "0.26", features = ["derive"] }
 ## Other Libs
 chrono = { version = "0.4", features = ["serde"] }
-dirs = { version = "5", optional = true }
+dirs = { version = "6", optional = true }
 ahash = "0.8"
 tracing = "0.1"
 
