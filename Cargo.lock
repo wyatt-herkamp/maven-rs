@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "edit-xml"
 version = "0.1.0"
-source = "git+https://github.com/wyatt-herkamp/edit-xml.git#3f3431bbb0835f6b14913a4ac5b45a23ef622f9f"
+source = "git+https://github.com/wyatt-herkamp/edit-xml.git#707db63514b2a59c624cc9ce6cb7c612e2ad58ea"
 dependencies = [
  "ahash",
  "encoding_rs",
