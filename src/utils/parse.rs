@@ -17,11 +17,14 @@ pub(crate) trait ParserExt<I, O, E>: Parser<I, O, E> {
     /// Returns [ParseErrorExt] instead of [winnow::error::ParseError],
     /// functionally equivalent to [winnow::Parser::parse].
     #[inline]
-    fn parse_ext(&mut self, mut input: I) -> Result<O, ParseErrorExt<I, E>>
+    fn parse_ext(
+        &mut self,
+        mut input: I,
+    ) -> Result<O, ParseErrorExt<I, <E as ParserError<I>>::Inner>>
     where
         Self: core::marker::Sized,
         I: Stream + StreamIsPartial,
-        E: ParserError<I>,
+        E: ParserError<I> + Debug,
     {
         debug_assert!(
             !I::is_partial_supported(),

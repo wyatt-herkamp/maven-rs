@@ -1,7 +1,7 @@
 use winnow::{
     combinator::{alt, delimited, eof, not, preceded, repeat},
     error::{
-        ContextError,
+        ContextError, ErrMode,
         StrContext::{Expected, Label},
     },
     stream::AsChar,
@@ -100,7 +100,7 @@ fn parse_var_suffix<'i>(input: &mut Input<'i, '_>) -> ModalResult<&'i str> {
         .context(Expected('}'.into()))
         .context(Label("var_suffix"))
         .parse_next(input)
-        .map_err(|e| {
+        .map_err(|e: ErrMode<_>| {
             if input.state.allow_unclosed_variable {
                 e
             } else {
