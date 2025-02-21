@@ -113,19 +113,28 @@ fn parse_var_suffix<'i>(input: &mut Input<'i, '_>) -> ModalResult<&'i str> {
 mod tests {
     use crate::types::{prop::ParseState, Property};
 
-    #[test]
-    fn unclosed_complex() {
+    fn get_unclosed_complex() -> (Property, &'static str) {
         let source = Property::Expression(vec![
             Property::Literal("lit1/".into()),
             Property::UnclosedVariable("var1/lit2/".into()),
             Property::Variable("var2".into()),
             Property::Literal("/lit3".into()),
         ]);
-        roundtrip(source, "lit1/${var1/lit2/${var2}/lit3", state(true));
+        (source, "lit1/${var1/lit2/${var2}/lit3")
     }
 
     #[test]
-    fn test_complex() {
+    fn test_unclosed_complex() {
+        roundtrip(&get_unclosed_complex(), state(true));
+    }
+
+    #[test]
+    #[should_panic]
+    fn panic_unclosed_complex() {
+        roundtrip(&get_unclosed_complex(), state(false));
+    }
+
+    fn get_complex() -> (Property, &'static str) {
         let source = Property::Expression(vec![
             Property::Literal("lit1/".into()),
             Property::Variable("var1".into()),
@@ -133,27 +142,35 @@ mod tests {
             Property::Variable("var2".into()),
             Property::Literal("/lit3".into()),
         ]);
-        roundtrip(source, "lit1/${var1}/lit2/${var2}/lit3", state(false));
+        (source, "lit1/${var1}/lit2/${var2}/lit3")
     }
 
-    fn state(unclosed: bool) -> ParseState {
+    #[test]
+    fn test_complex() {
+        let input = verify_closed(get_complex());
+        roundtrip(&input, state(false));
+        roundtrip(&input, state(true));
+    }
+
+    fn state(allow_unclosed: bool) -> ParseState {
         ParseState {
-            allow_unclosed_variable: unclosed,
+            allow_unclosed_variable: allow_unclosed,
         }
     }
 
-    fn roundtrip(source: Property, sanity: &str, state: ParseState) {
-        if !state.allow_unclosed_variable {
-            visit(&source, |p| {
-                assert!(!matches!(p, Property::UnclosedVariable(_)));
-            });
-        }
+    fn verify_closed<'a>(input: (Property, &'a str)) -> (Property, &'a str) {
+        visit(&input.0, |p| {
+            assert!(!matches!(p, Property::UnclosedVariable(_)));
+        });
+        input
+    }
 
-        let string = source.to_string();
-        assert_eq!(string, sanity);
+    fn roundtrip(input: &(Property, &str), state: ParseState) {
+        let string = input.0.to_string();
+        assert_eq!(string, input.1);
 
         let parsed = state.parse(&string).unwrap();
-        assert_eq!(parsed, source);
+        assert_eq!(parsed, input.0);
     }
 
     fn visit(prop: &Property, mut visitor: impl FnMut(&Property)) {
