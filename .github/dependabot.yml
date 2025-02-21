@@ -19,5 +19,5 @@ updates:
           - "minor"
     ignore:
       - dependency-name: "winnow"
-        update-types: ["minor", "major"]
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
