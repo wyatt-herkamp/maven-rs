@@ -7,12 +7,12 @@ use strum::{Display, EnumString};
 
 use crate::{
     editor::{
+        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, InvalidValueError,
+        PomValue, UpdatableElement,
         utils::{
             add_if_present, find_or_create_then_set_text_content, sync_element,
             typed_from_element_using_builder,
         },
-        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, InvalidValueError,
-        PomValue, UpdatableElement,
     },
     utils::serde_utils::serde_via_string_types,
 };
@@ -69,6 +69,9 @@ impl UpdatableElement for Repository {
         sync_element(document, element, "id", self.id.as_deref());
         sync_element(document, element, "name", self.name.as_deref());
         find_or_create_then_set_text_content(document, element, "url", self.url.as_str());
+        sync_element(document, element, "layout", self.layout.as_deref());
+        sync_element(document, element, "checksumPolicy", self.checksum_policy);
+        sync_element(document, element, "updatePolicy", self.update_policy);
         // TODO: Layout
         Ok(())
     }
@@ -200,6 +203,11 @@ pub enum ChecksumPolicy {
     Fail,
     Warn,
 }
+impl Into<String> for ChecksumPolicy {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
 serde_via_string_types!(ChecksumPolicy);
 impl PomValue for ChecksumPolicy {
     fn from_str_for_editor(value: &str) -> Result<Self, InvalidValueError> {
@@ -246,6 +254,11 @@ pub enum UpdatePolicy {
     Daily,
     Interval(usize),
     Never,
+}
+impl Into<String> for UpdatePolicy {
+    fn into(self) -> String {
+        self.to_string()
+    }
 }
 impl FromStr for UpdatePolicy {
     type Err = InvalidValueError;
@@ -453,4 +466,51 @@ mod tests {
             },
         )
     }
+
+    #[test]
+    fn update_element_test() -> anyhow::Result<()> {
+        let actual_xml = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+            <repository>
+                <id>central</id>
+                <url>https://repo.maven.apache.org/maven2/</url>
+            </repository>
+            "#
+        );
+        let mut document = edit_xml::Document::parse_str(&actual_xml).unwrap();
+        let Some(raw_element) = document.root_element() else {
+            println!("{}", actual_xml);
+            panic!("No root element found");
+        };
+
+        let repository = Repository {
+            id: Some("central".to_string()),
+            name: Some("Maven Central".to_string()),
+            url: "https://repo.maven.apache.org/maven2/".to_string(),
+            layout: Some("default".to_string()),
+            update_policy: Some(UpdatePolicy::Daily),
+            checksum_policy: Some(ChecksumPolicy::Fail),
+
+            ..Default::default()
+        };
+
+        repository.update_element(raw_element, &mut document)?;
+
+        let new_xml = document.write_str()?;
+        let expected_xml = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<repository>
+  <id>central</id>
+  <url>https://repo.maven.apache.org/maven2/</url>
+  <name>Maven Central</name>
+  <layout>default</layout>
+  <checksumPolicy>fail</checksumPolicy>
+  <updatePolicy>daily</updatePolicy>
+</repository>"#
+        );
+        assert_eq!(new_xml, expected_xml);
+        Ok(())
+    }
+
+
 }

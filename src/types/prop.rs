@@ -1,4 +1,5 @@
 use winnow::{
+    ModalResult, Parser, Stateful,
     combinator::{alt, delimited, eof, not, preceded, repeat},
     error::{
         ContextError, ErrMode,
@@ -6,7 +7,6 @@ use winnow::{
     },
     stream::AsChar,
     token::{literal, rest, take_until, take_while},
-    ModalResult, Parser, Stateful,
 };
 
 use crate::utils::parse::{ParseErrorExt, ParserExt};
@@ -111,7 +111,9 @@ fn parse_var_suffix<'i>(input: &mut Input<'i, '_>) -> ModalResult<&'i str> {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{prop::ParseState, Property};
+    use rand::Rng;
+
+    use crate::types::{Property, prop::ParseState};
 
     fn get_unclosed_complex() -> (Property, &'static str) {
         let source = Property::Expression(vec![
@@ -177,6 +179,98 @@ mod tests {
         visitor(prop);
         if let Property::Expression(vec) = prop {
             vec.iter().for_each(visitor);
+        }
+    }
+    #[test]
+    fn enum_is_testing() {
+        {
+            let variable = Property::Variable("var".to_string());
+            assert!(variable.is_variable());
+        }
+
+        {
+            let maven_variable = Property::Variable("maven.var".to_string());
+            assert!(maven_variable.is_variable());
+            assert!(maven_variable.is_maven_variable());
+
+            let none_variable = Property::Literal("literal".to_string());
+
+            assert!(!none_variable.is_variable());
+            assert!(!none_variable.is_maven_variable());
+        }
+
+        {
+            let project_variable = Property::Variable("project.var".to_string());
+            assert!(project_variable.is_variable());
+            assert!(project_variable.is_project_variable());
+
+            let none_variable = Property::Literal("literal".to_string());
+
+            assert!(!none_variable.is_variable());
+            assert!(!none_variable.is_project_variable());
+        }
+    }
+
+    #[test]
+    fn try_from_string() {
+        let variable = Property::try_from("${project.version}".to_string()).unwrap();
+        assert!(variable.is_variable());
+        assert!(variable.is_project_variable());
+
+        let literal = Property::try_from("1.0.0".to_string()).unwrap();
+        assert!(!literal.is_variable());
+        assert!(!literal.is_project_variable());
+
+        let expression =
+            Property::try_from("${project.version}-${maven.buildNumber}".to_string()).unwrap();
+        if let Property::Expression(vec) = expression {
+            assert_eq!(vec.len(), 3);
+            assert!(matches!(vec[0], Property::Variable(_)));
+            assert!(matches!(vec[1], Property::Literal(_)));
+            assert!(matches!(vec[2], Property::Variable(_)));
+        } else {
+            panic!("Expected expression");
+        }
+    }
+
+    #[test]
+    fn fuzz() {
+        let rand = &mut rand::rngs::ThreadRng::default();
+
+        for _ in 0..100 {
+            let variable_or_literal = rand.random_bool(0.5f64);
+            let value = if variable_or_literal {
+                let number_of_parts = rand.random_range(1..=5);
+
+                let mut parts: Vec<String> = Vec::new();
+
+                for _ in 0..number_of_parts {
+                    let length = rand.random_range(3..=10);
+                    parts.push(
+                        rand.sample_iter(&rand::distr::Alphanumeric)
+                            .take(length)
+                            .map(char::from)
+                            .collect(),
+                    )
+                }
+
+                format!("${{{}}}", parts.join("."))
+            } else {
+                let length = rand.random_range(3..=10);
+
+                rand.sample_iter(&rand::distr::Alphanumeric)
+                    .take(length)
+                    .map(char::from)
+                    .collect()
+            };
+
+            let parsed = ParseState::default().parse(&value).unwrap();
+            if variable_or_literal {
+                assert!(parsed.is_variable());
+            } else {
+                assert!(!parsed.is_variable());
+            }
+            assert_eq!(parsed.to_string(), value);
         }
     }
 }

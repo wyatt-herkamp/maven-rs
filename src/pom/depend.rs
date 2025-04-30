@@ -3,12 +3,12 @@ use std::str::FromStr;
 pub mod resolve;
 use crate::{
     editor::{
+        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, UpdatableElement,
+        XMLEditorError,
         utils::{
             add_if_present, create_basic_text_element, find_or_create_then_set_text_content,
             sync_element, typed_from_element_using_builder,
         },
-        ChildOfListElement, ComparableElement, ElementConverter, HasElementName, UpdatableElement,
-        XMLEditorError,
     },
     types::Property,
     utils::group_id_and_artifact_id_and_version_to_path,
@@ -242,6 +242,12 @@ mod tests {
         assert_eq!(dep, Dependency::try_from(dep_str).unwrap());
         assert_eq!(dep_str, dep.to_string());
     }
+
+    #[test]
+    fn invalid_dependency_syntax() {
+        assert!(Dependency::try_from("".to_string()).is_err());
+        assert!(Dependency::from_str("com.google.guava").is_err());
+    }
     #[test]
     pub fn test_is_same_dependency() {
         let dep = Dependency {
@@ -364,6 +370,65 @@ mod tests {
                 }
             }
         }
+        Ok(())
+    }
+    #[test]
+    fn test_pom_name_and_path() {
+        let dep = Dependency {
+            group_id: "com.google.guava".to_string(),
+            artifact_id: "guava".to_string(),
+            version: Some("30.1-jre".parse().unwrap()),
+            depend_type: None,
+            scope: None,
+            classifier: None,
+        };
+        assert_eq!(dep.pom_name(), "guava-30.1-jre.pom");
+        assert_eq!(
+            dep.pom_path(),
+            "com/google/guava/guava/30.1-jre/guava-30.1-jre.pom"
+        );
+    }
+    #[test]
+    fn update_element_test() -> anyhow::Result<()> {
+        let actual_xml = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>30.1-jre</version>
+            </dependency>
+            "#
+        );
+        let mut document = edit_xml::Document::parse_str(&actual_xml).unwrap();
+        let Some(raw_element) = document.root_element() else {
+            println!("{}", actual_xml);
+            panic!("No root element found");
+        };
+
+        let dep = Dependency {
+            group_id: "com.google.guava".to_string(),
+            artifact_id: "guava".to_string(),
+            version: Some("30.1-jre".parse().unwrap()),
+            depend_type: Some("jar".to_string()),
+            scope: Some("compile".to_string()),
+            classifier: Some("tests".to_string()),
+        };
+
+        dep.update_element(raw_element, &mut document)?;
+
+        let new_xml = document.write_str()?;
+        let expected_xml = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<dependency>
+  <groupId>com.google.guava</groupId>
+  <artifactId>guava</artifactId>
+  <version>30.1-jre</version>
+  <type>jar</type>
+  <scope>compile</scope>
+  <classifier>tests</classifier>
+</dependency>"#
+        );
+        assert_eq!(new_xml, expected_xml);
         Ok(())
     }
 }

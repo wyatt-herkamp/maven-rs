@@ -164,4 +164,50 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    pub fn test_create_and_delete() -> anyhow::Result<()> {
+        let mut editor = PomEditor::new_with_group_and_artifact("dev.wyatt-herkamp", "test");
+
+        assert!(
+            editor
+                .get_distribution_management_element_or_none()
+                .is_none()
+        );
+
+        assert!(!editor.has_distribution_management());
+
+        assert_eq!(editor.delete_distribution_management()?, false);
+
+        {
+            let mut dm = editor.get_or_create_distribution_management_element();
+
+            dm.set_repository(Some(
+                distribution_management::DistributionRepository {
+                    id: Some("test".to_string()),
+                    name: Some("test".to_string()),
+                    url: "https://test.com".to_string(),
+                    layout: Some("default".to_string()),
+                    ..Default::default()
+                }
+                .repository(),
+            ))?;
+        }
+
+        let value = editor.write_to_str()?;
+
+        let mut editor = PomEditor::load_from_str(&value)?;
+
+        assert!(editor.has_distribution_management());
+        {
+            let dm = editor.get_distribution_management_element_or_none();
+
+            assert!(dm.is_some());
+        }
+        editor.delete_distribution_management()?;
+
+        assert!(!editor.has_distribution_management());
+
+        Ok(())
+    }
 }

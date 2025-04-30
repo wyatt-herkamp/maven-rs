@@ -47,7 +47,7 @@ pretty_assertions = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 walkdir = { version = "2" }
 toml = { version = "0.8" }
-
+rand = { version = "0.9" }
 [[example]]
 name = "check_against_local_repo"
 required-features = ["local"]

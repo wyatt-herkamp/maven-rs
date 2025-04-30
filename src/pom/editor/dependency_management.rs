@@ -2,8 +2,8 @@ use edit_xml::Element;
 
 use crate::{
     editor::{
-        utils::{add_or_update_item, get_all_children_of_element},
         XMLEditorError,
+        utils::{add_or_update_item, get_all_children_of_element},
     },
     pom::Dependency,
 };
@@ -171,4 +171,5 @@ mod tests {
         println!("{}", saved_file);
         Ok(())
     }
+
 }

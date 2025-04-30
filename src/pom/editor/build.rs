@@ -1,8 +1,8 @@
 use edit_xml::Element;
 
 use crate::{
-    editor::utils::{add_or_update_item, get_all_children_of_element},
     editor::XMLEditorError,
+    editor::utils::{add_or_update_item, get_all_children_of_element},
     pom::build::Plugin,
 };
 
@@ -113,7 +113,7 @@ impl<'a> BuildEditor<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        pom::editor::{build::Plugin, PomEditor},
+        pom::editor::{PomEditor, build::Plugin},
         types::Property,
     };
 
@@ -136,6 +136,46 @@ mod tests {
         }
         let value = editor.write_to_str()?;
         println!("{}", value);
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn test_create_and_delete() -> anyhow::Result<()> {
+        let mut editor = PomEditor::new_with_group_and_artifact("dev.wyatt-herkamp", "test");
+
+        assert!(editor.get_build_element_or_none().is_none());
+
+        assert!(!editor.has_build());
+
+        assert_eq!(editor.delete_build()?, false);
+
+        {
+            let mut build_editor = editor.get_or_create_build_element();
+            build_editor.set_source_directory("src/main/java");
+            build_editor.set_final_name("test");
+            assert_eq!(
+                build_editor.get_source_directory(),
+                Some("src/main/java".to_string())
+            );
+            assert_eq!(build_editor.get_final_name(), Some("test".to_string()));
+
+            assert!(build_editor.get_plugins()?.is_empty());
+        }
+
+        let value = editor.write_to_str()?;
+
+        let mut editor = PomEditor::load_from_str(&value)?;
+
+        assert!(editor.has_build());
+        {
+            let build_editor = editor.get_build_element_or_none();
+
+            assert!(build_editor.is_some());
+        }
+        editor.delete_build()?;
+
+        assert!(!editor.has_build());
 
         Ok(())
     }
