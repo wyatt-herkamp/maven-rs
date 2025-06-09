@@ -53,7 +53,7 @@ impl Settings {
 /// # Example
 ///
 /// ```
-/// use maven_rs::settings::directories::get_settings_directory;
+/// use maven_rs::settings::get_settings_directory;
 /// let path = get_settings_directory();
 /// println!("{:?}", path);
 /// ``````
@@ -68,7 +68,6 @@ pub fn get_settings_path() -> Option<PathBuf> {
 
 #[cfg(test)]
 pub mod tests {
-    use std::env;
 
     use crate::settings::{Server, Servers, Settings};
 

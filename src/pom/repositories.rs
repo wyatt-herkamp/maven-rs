@@ -203,11 +203,12 @@ pub enum ChecksumPolicy {
     Fail,
     Warn,
 }
-impl Into<String> for ChecksumPolicy {
-    fn into(self) -> String {
-        self.to_string()
+impl From<ChecksumPolicy> for String {
+    fn from(policy: ChecksumPolicy) -> Self {
+        policy.to_string()
     }
 }
+
 serde_via_string_types!(ChecksumPolicy);
 impl PomValue for ChecksumPolicy {
     fn from_str_for_editor(value: &str) -> Result<Self, InvalidValueError> {
@@ -255,11 +256,12 @@ pub enum UpdatePolicy {
     Interval(usize),
     Never,
 }
-impl Into<String> for UpdatePolicy {
-    fn into(self) -> String {
-        self.to_string()
+impl From<UpdatePolicy> for String {
+    fn from(policy: UpdatePolicy) -> Self {
+        policy.to_string()
     }
 }
+
 impl FromStr for UpdatePolicy {
     type Err = InvalidValueError;
 
@@ -469,15 +471,13 @@ mod tests {
 
     #[test]
     fn update_element_test() -> anyhow::Result<()> {
-        let actual_xml = format!(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
+        let actual_xml = r#"<?xml version="1.0" encoding="UTF-8"?>
             <repository>
                 <id>central</id>
                 <url>https://repo.maven.apache.org/maven2/</url>
             </repository>
-            "#
-        );
-        let mut document = edit_xml::Document::parse_str(&actual_xml).unwrap();
+            "#;
+        let mut document = edit_xml::Document::parse_str(actual_xml).unwrap();
         let Some(raw_element) = document.root_element() else {
             println!("{}", actual_xml);
             panic!("No root element found");
@@ -497,8 +497,7 @@ mod tests {
         repository.update_element(raw_element, &mut document)?;
 
         let new_xml = document.write_str()?;
-        let expected_xml = format!(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
+        let expected_xml = r#"<?xml version="1.0" encoding="UTF-8"?>
 <repository>
   <id>central</id>
   <url>https://repo.maven.apache.org/maven2/</url>
@@ -506,11 +505,8 @@ mod tests {
   <layout>default</layout>
   <checksumPolicy>fail</checksumPolicy>
   <updatePolicy>daily</updatePolicy>
-</repository>"#
-        );
+</repository>"#;
         assert_eq!(new_xml, expected_xml);
         Ok(())
     }
-
-
 }

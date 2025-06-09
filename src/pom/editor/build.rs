@@ -148,7 +148,7 @@ mod tests {
 
         assert!(!editor.has_build());
 
-        assert_eq!(editor.delete_build()?, false);
+        assert!(!editor.delete_build()?);
 
         {
             let mut build_editor = editor.get_or_create_build_element();

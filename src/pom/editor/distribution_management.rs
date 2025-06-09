@@ -177,7 +177,7 @@ mod tests {
 
         assert!(!editor.has_distribution_management());
 
-        assert_eq!(editor.delete_distribution_management()?, false);
+        assert!(!editor.delete_distribution_management()?);
 
         {
             let mut dm = editor.get_or_create_distribution_management_element();

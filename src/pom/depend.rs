@@ -390,16 +390,14 @@ mod tests {
     }
     #[test]
     fn update_element_test() -> anyhow::Result<()> {
-        let actual_xml = format!(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
+        let actual_xml = r#"<?xml version="1.0" encoding="UTF-8"?>
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>30.1-jre</version>
             </dependency>
-            "#
-        );
-        let mut document = edit_xml::Document::parse_str(&actual_xml).unwrap();
+            "#;
+        let mut document = edit_xml::Document::parse_str(actual_xml).unwrap();
         let Some(raw_element) = document.root_element() else {
             println!("{}", actual_xml);
             panic!("No root element found");
@@ -417,8 +415,7 @@ mod tests {
         dep.update_element(raw_element, &mut document)?;
 
         let new_xml = document.write_str()?;
-        let expected_xml = format!(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
+        let expected_xml = r#"<?xml version="1.0" encoding="UTF-8"?>
 <dependency>
   <groupId>com.google.guava</groupId>
   <artifactId>guava</artifactId>
@@ -426,8 +423,7 @@ mod tests {
   <type>jar</type>
   <scope>compile</scope>
   <classifier>tests</classifier>
-</dependency>"#
-        );
+</dependency>"#;
         assert_eq!(new_xml, expected_xml);
         Ok(())
     }
