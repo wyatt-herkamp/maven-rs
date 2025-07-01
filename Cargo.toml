@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 ## Parsing Libraries
-quick-xml = { version = "0.37", features = ["serialize"] }
+quick-xml = { version = "0.38", features = ["serialize"] }
 winnow = { version = "0.7" }
 edit-xml = { git = "https://github.com/wyatt-herkamp/edit-xml.git", features = [
     "ahash",
