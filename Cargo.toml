@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 ## Parsing Libraries
-quick-xml = { version = "0.37", features = ["serialize"] }
+quick-xml = { version = "0.38", features = ["serialize"] }
 winnow = { version = "0.7" }
 edit-xml = { git = "https://github.com/wyatt-herkamp/edit-xml.git", features = [
     "ahash",
@@ -44,7 +44,7 @@ anyhow = { version = "1" }
 pretty_assertions = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 walkdir = { version = "2" }
-toml = { version = "0.8" }
+toml = { version = "0.9" }
 rand = { version = "0.9" }
 [[example]]
 name = "check_against_local_repo"
