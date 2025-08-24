@@ -160,7 +160,7 @@ mod tests {
         }
     }
 
-    fn verify_closed(input: (Property, & str)) -> (Property, &str) {
+    fn verify_closed(input: (Property, &str)) -> (Property, &str) {
         visit(&input.0, |p| {
             assert!(!matches!(p, Property::UnclosedVariable(_)));
         });

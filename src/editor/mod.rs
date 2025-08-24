@@ -229,7 +229,9 @@ macro_rules! pom_value_num {
         )*
     };
 }
-pom_value_num!(usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128, f32, f64);
+pom_value_num!(
+    usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128, f32, f64
+);
 
 impl PomValue for PathBuf {
     fn from_str_for_editor(value: &str) -> Result<Self, InvalidValueError> {

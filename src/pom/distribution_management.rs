@@ -3,8 +3,8 @@ use edit_xml::Element;
 use serde::{Deserialize, Serialize};
 
 use crate::editor::{
-    utils::{add_if_present, find_or_create_then_set_text_content, sync_element},
     ComparableElement, ElementConverter, HasElementName, PomValue, UpdatableElement,
+    utils::{add_if_present, find_or_create_then_set_text_content, sync_element},
 };
 
 use super::{ChecksumPolicy, UpdatePolicy};

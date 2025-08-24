@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     editor::{
-        utils::{add_if_present, create_basic_text_element, find_element_or_err, sync_element},
         ChildOfListElement, ComparableElement, ElementConverter, HasElementName, PomValue,
         UpdatableElement, XMLEditorError,
+        utils::{add_if_present, create_basic_text_element, find_element_or_err, sync_element},
     },
     types::Property,
 };

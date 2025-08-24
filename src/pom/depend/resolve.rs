@@ -1,7 +1,7 @@
 use crate::meta::DeployMetadata;
 use crate::meta::SnapshotMetadata;
-use crate::pom::editor::PomEditor;
 use crate::pom::Pom;
+use crate::pom::editor::PomEditor;
 use crate::resolver::ResolvableRepository;
 use crate::utils::group_id_and_artifact_id_to_path;
 use bytes::Buf;

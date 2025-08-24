@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use maven_rs::pom::{editor::PomEditor, Dependency};
+use maven_rs::pom::{Dependency, editor::PomEditor};
 
 #[test]
 pub fn test_read_test_pom() -> anyhow::Result<()> {

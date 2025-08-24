@@ -4,10 +4,10 @@ use std::{
 };
 
 use winnow::{
+    Parser,
     combinator::eof,
     error::ParserError,
     stream::{Stream, StreamIsPartial},
-    Parser,
 };
 
 /// Extends [Parser] with helper methods.

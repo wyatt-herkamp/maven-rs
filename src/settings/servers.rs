@@ -2,8 +2,8 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::editor::{
-    utils::{add_if_present, create_basic_text_element, from_element_using_builder},
     ChildOfListElement, ElementConverter, HasElementName, UpdatableElement,
+    utils::{add_if_present, create_basic_text_element, from_element_using_builder},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

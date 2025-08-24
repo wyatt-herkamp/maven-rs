@@ -3,9 +3,9 @@ use edit_xml::{Document, Element};
 use serde::{Deserialize, Serialize};
 
 use crate::editor::{
-    utils::{add_if_present, from_element_using_builder, sync_element},
     ChildOfListElement, ComparableElement, ElementConverter, HasElementName, UpdatableElement,
     XMLEditorError,
+    utils::{add_if_present, from_element_using_builder, sync_element},
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

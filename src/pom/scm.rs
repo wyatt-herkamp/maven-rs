@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::editor::{
-    utils::{add_if_present, from_element_using_builder, sync_element},
     ElementConverter, HasElementName, UpdatableElement,
+    utils::{add_if_present, from_element_using_builder, sync_element},
 };
 #[derive(Debug, Clone, Copy, Error)]
 pub enum SCMError {

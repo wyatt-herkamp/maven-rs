@@ -2,10 +2,10 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::editor::{
+    ChildOfListElement, ElementConverter, HasElementName, UpdatableElement,
     utils::{
         create_basic_text_element, find_or_create_then_set_text_content, from_element_using_builder,
     },
-    ChildOfListElement, ElementConverter, HasElementName, UpdatableElement,
 };
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

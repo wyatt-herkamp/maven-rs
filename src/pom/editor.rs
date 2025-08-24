@@ -16,10 +16,10 @@ use edit_xml::{Document, Element, ReadOptions, WriteOptions};
 mod build;
 mod dependency_management;
 mod distribution_management;
-use super::{depend::Dependency, Developer, Parent, Repository, Scm};
+use super::{Developer, Parent, Repository, Scm, depend::Dependency};
 use crate::editor::{
-    utils::{add_or_update_item, get_all_children_of_element, MissingElementError},
     ElementConverter, UpdatableElement, XMLEditorError,
+    utils::{MissingElementError, add_or_update_item, get_all_children_of_element},
 };
 pub use build::*;
 pub use dependency_management::*;
